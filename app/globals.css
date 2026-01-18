@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  /* Palette Culture+ (Niger Inspired) */
+  --marketing-orange: #E05206;
+  /* Orange vibrant (Drapeau/Soleil) */
+  --marketing-green: #0E8A38;
+  /* Vert profond (Drapeau/Nature) */
+  --sand-50: #FDFAF5;
+  /* Fond très clair */
+  --sand-100: #F3EFE9;
+  /* Fond secondaire */
+  --charcoal-900: #1A1A1A;
+  /* Texte principal */
+  --charcoal-600: #4A4A4A;
+  /* Texte secondaire */
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+body {
+  color: var(--charcoal-900);
+  background: var(--sand-50);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utilitaires Custom pour le look "Premium" */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-sm);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--marketing-orange), #FF8C42);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary {
+  background-color: var(--marketing-orange);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  background-color: #C74500;
+}
