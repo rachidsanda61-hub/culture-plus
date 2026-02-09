@@ -7,76 +7,30 @@ import { Search, Filter, Plus } from 'lucide-react';
 import { useEvents } from '@/context/EventsContext';
 import Link from 'next/link';
 
+const CATEGORIES = ['Tout', 'Musique', 'Festivals', 'Arts Visuels', 'Foires', 'Formations', 'Séminaires', 'Cinéma', 'Littérature', 'Mode', 'Théâtre'];
+
 export default function EventsPage() {
-    const events = [
-        {
-            title: "Festival de la Mode Nigérienne - FIMA 2026",
-            category: "Mode & Design",
-            date: "12 Déc 2026",
-            location: "Niamey, Palais des Congrès",
-            slug: "fima-2026",
-        },
-        {
-            title: "Concert de la Paix - Sahel Tour",
-            category: "Musique",
-            date: "05 Nov 2026",
-            location: "Agadez, Stade Régional",
-            slug: "sahel-tour",
-            image: "https://images.unsplash.com/photo-1514525253440-b393452e8d26?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Foire Artisanale de Dosso",
-            category: "Foire",
-            date: "12 Mar 2026",
-            location: "Dosso, Place des Artisans",
-            slug: "foire-dosso"
-        },
-        {
-            title: "Formation : Marketing Digital pour Artistes",
-            category: "Formation",
-            date: "18 Fev 2026",
-            location: "Niamey, Incubateur CIPMEN",
-            slug: "formation-marketing"
-        },
-        {
-            title: "Exposition d'Art Touareg Contemporain",
-            category: "Exposition",
-            date: "20 Oct - 05 Nov",
-            location: "Zinder, Centre Culturel",
-            slug: "art-touareg"
-        },
-        {
-            title: "Séminaire : Droit d'auteur au Niger",
-            category: "Séminaire",
-            date: "05 Avr 2026",
-            location: "Niamey, Grand Hôtel",
-            slug: "seminaire-droit-auteur"
-        },
-        {
-            title: "Atelier d'Écriture Slam & Poésie",
-            category: "Littérature",
-            date: "15 Jan 2026",
-            location: "Niamey, CCFN",
-            slug: "atelier-slam"
-        },
-        {
-            title: "Danse Traditionnelle du Manga",
-            category: "Danse",
-            date: "02 Fev 2026",
-            location: "Diffa, Maison de la Culture",
-            slug: "danse-manga"
-        },
-        {
-            title: "Projection Plein Air : 'L'Arbre sans fruit'",
-            category: "Cinéma",
-            date: "10 Jan 2026",
-            location: "Maradi, Place Publique",
-            slug: "projection-plein-air"
-        }
-    ];
+    const { events } = useEvents();
+    const [selectedCategory, setSelectedCategory] = React.useState('Tout');
+    const [searchQuery, setSearchQuery] = React.useState('');
+
+    const filteredEvents = events.filter(event => {
+        const eventCat = event.category.trim();
+        // Defensive check: handle common singular/plural mismatches for the UI tabs
+        const matchesCategory = selectedCategory === 'Tout' ||
+            eventCat === selectedCategory ||
+            (selectedCategory === 'Formations' && eventCat === 'Formation') ||
+            (selectedCategory === 'Foires' && eventCat === 'Foire') ||
+            (selectedCategory === 'Séminaires' && eventCat === 'Séminaire') ||
+            (selectedCategory === 'Festivals' && eventCat === 'Festival');
+
+        const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            event.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
 
     return (
-        <main className="min-h-screen bg-[var(--sand-50)] py-12">
+        <main className="min-h-screen bg-[var(--sand-50)] pt-24 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Header */}
@@ -105,21 +59,21 @@ export default function EventsPage() {
                             <input
                                 type="text"
                                 placeholder="Rechercher..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-10 pr-4 py-2.5 rounded-full border border-gray-200 focus:outline-none focus:border-[var(--marketing-orange)] focus:ring-1 focus:ring-[var(--marketing-orange)] w-64 bg-white"
                             />
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         </div>
-                        <Button variant="outline" className="px-3">
-                            <Filter size={20} />
-                        </Button>
                     </div>
                 </div>
 
                 <div className="flex overflow-x-auto gap-2 pb-6 mb-2 no-scrollbar">
-                    {['Tout', 'Musique', 'Festivals', 'Arts Visuels', 'Foires', 'Formations', 'Séminaires', 'Cinéma', 'Littérature', 'Mode', 'Théâtre'].map((cat, i) => (
+                    {CATEGORIES.map((cat) => (
                         <button
                             key={cat}
-                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${i === 0 ? 'bg-[var(--charcoal-900)] text-white' : 'bg-white text-[var(--charcoal-600)] hover:bg-[var(--sand-100)]'}`}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === cat ? 'bg-[var(--charcoal-900)] text-white' : 'bg-white text-[var(--charcoal-600)] hover:bg-[var(--sand-100)]'}`}
                         >
                             {cat}
                         </button>
@@ -128,9 +82,22 @@ export default function EventsPage() {
 
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {events.map((event, idx) => (
-                        <EventCard key={idx} {...event} />
-                    ))}
+                    {filteredEvents.length > 0 ? (
+                        filteredEvents.map((event, idx) => (
+                            <EventCard key={idx} {...event} />
+                        ))
+                    ) : (
+                        <div className="col-span-full py-20 text-center">
+                            <p className="text-gray-500">Aucun événement ne correspond à vos critères.</p>
+                            <Button
+                                variant="ghost"
+                                className="mt-4 text-[var(--marketing-orange)]"
+                                onClick={() => { setSelectedCategory('Tout'); setSearchQuery(''); }}
+                            >
+                                Réinitialiser les filtres
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Load More */}

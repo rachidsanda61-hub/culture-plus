@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?   // Optional for now as we might have social login later, but required for manual registration
+  phone         String?   @unique
+  name          String?
+  role          String    @default("public") // 'artist', 'public', 'promoter'
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Profile data
+  bio           String?
+  location      String?
+  tags          String[]
+  rating        Float     @default(0)
+  followers     Int       @default(0)
+
+  // Relations
+  posts         Post[]
+  comments      Comment[]
+  reviews       Review[]  @relation("WrittenReviews")
+  receivedReviews Review[] @relation("ReceivedReviews")
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  
+  eventLikes      EventLike[]
+  eventInterests  EventInterest[]
+  postLikes       PostLike[]
+  
+  notifications   Notification[]
+  
+  followedBy    Follow[]  @relation("followedBy")
+  following     Follow[]  @relation("following")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("following", fields: [followerId], references: [id])
+  following   User     @relation("followedBy", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // 'event', 'message', 'post', 'like', 'follow', 'comment'
+  title     String
+  message   String
+  link      String?
+  image     String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Opportunity {
+  id            String   @id @default(cuid())
+  title         String
+  type          String
+  deadline      String   // Keeping as string to match existing frontend format for now, or could change to DateTime
+  amount        String
+  organization  String
+  link          String?
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Event {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  category      String
+  date          String   // Keeping as string for frontend compatibility
+  location      String
+  description   String?
+  image         String?
+  price         String?   @default("Gratuit") // e.g. "5000 FCFA" or "Gratuit"
+  startTime     String?   // e.g. "18:00"
+  endTime       String?   // e.g. "21:00"
+  organizer     String?   
+  likes         Int      @default(0)
+  interested    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  likes_list    EventLike[]
+  interested_list EventInterest[]
+}
+
+model EventLike {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+}
+
+model EventInterest {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+}
+
+model Post {
+  id        String    @id @default(cuid())
+  content   String
+  image     String?
+  likes     Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  likes_list PostLike[]
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+
+  parentId  String?
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  rating      Int
+  text        String
+  createdAt   DateTime @default(now())
+  
+  authorId    String
+  author      User     @relation("WrittenReviews", fields: [authorId], references: [id])
+  
+  targetId    String
+  target      User     @relation("ReceivedReviews", fields: [targetId], references: [id])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  createdAt   DateTime @default(now())
+  read        Boolean  @default(false)
+  
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}

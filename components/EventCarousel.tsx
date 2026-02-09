@@ -7,14 +7,8 @@ import Autoplay from 'embla-carousel-autoplay';
 import { EventCard } from './EventCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface Event {
-    title: string;
-    category: string;
-    date: string;
-    location: string;
-    slug: string;
-    image?: string;
-}
+import { Event } from '@/context/EventsContext';
+import { useEvents } from '@/context/EventsContext';
 
 interface EventCarouselProps {
     events: Event[];

@@ -10,16 +10,20 @@ interface EventProps {
     category: string;
     date: string;
     location: string;
-    image?: string;
+    image?: string | null;
     slug: string;
-    description?: string;
+    description?: string | null;
+    price?: string | null;
+    startTime?: string | null;
+    endTime?: string | null;
+    organizer?: string | null;
     likes: number;
     interested: number;
 }
 
 import { ShareButton } from './ShareButton';
 
-export const EventCard = ({ title, category, date, location, image, slug, description, likes, interested }: EventProps) => {
+export const EventCard = ({ title, category, date, location, image, slug, description, likes, interested, price, startTime, endTime, organizer }: EventProps) => {
     const { likeEvent, interestEvent } = useEvents();
 
     return (
@@ -37,6 +41,11 @@ export const EventCard = ({ title, category, date, location, image, slug, descri
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-[var(--marketing-orange)] uppercase tracking-wider">
                     {category}
                 </div>
+                {price && (
+                    <div className="absolute bottom-4 right-4 bg-[var(--marketing-orange)] text-white px-3 py-1 rounded-lg text-sm font-bold shadow-lg">
+                        {price}
+                    </div>
+                )}
             </div>
 
             {/* Content */}
@@ -52,9 +61,15 @@ export const EventCard = ({ title, category, date, location, image, slug, descri
                     </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-[var(--charcoal-900)] mb-2 line-clamp-2 leading-tight">
+                <h3 className="text-xl font-bold text-[var(--charcoal-900)] mb-1 line-clamp-2 leading-tight">
                     {title}
                 </h3>
+
+                {organizer && (
+                    <p className="text-xs font-medium text-[var(--marketing-orange)] mb-3 uppercase tracking-wide">
+                        Par {organizer}
+                    </p>
+                )}
 
                 {description && (
                     <p className="text-sm text-gray-500 line-clamp-2 mb-4">

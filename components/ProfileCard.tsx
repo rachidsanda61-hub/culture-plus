@@ -1,16 +1,17 @@
 
 import React from 'react';
-import { MapPin, UserPlus, Star, UserCheck } from 'lucide-react';
+import { MapPin, UserPlus, Star, UserCheck, UserMinus } from 'lucide-react';
 import { Button } from './Button';
 import Link from 'next/link';
 import { useProfiles } from '@/context/ProfilesContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface ProfileCardProps {
     id: string;
     name: string;
     role: string;
-    location: string;
-    image?: string;
+    location: string | null;
+    image?: string | null;
     tags: string[];
     followers: number;
     isFollowed: boolean;
@@ -18,7 +19,10 @@ interface ProfileCardProps {
 }
 
 export const ProfileCard = ({ id, name, role, location, image, tags, followers, isFollowed, rating }: ProfileCardProps) => {
-    const { followProfile } = useProfiles();
+    const { followProfile, isProcessingFollow } = useProfiles();
+    const { user } = useAuth();
+    const isProcessing = isProcessingFollow(id);
+    const isOwnProfile = user?.id === id;
 
     return (
         <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition-all p-6 flex flex-col items-center text-center">
@@ -69,21 +73,25 @@ export const ProfileCard = ({ id, name, role, location, image, tags, followers, 
                 </div>
 
                 <div className="flex gap-2">
-                    <Button
-                        onClick={() => followProfile(id)}
-                        variant={isFollowed ? "outline" : "primary"}
-                        className={`flex-1 justify-center ${isFollowed ? 'border-[var(--marketing-green)] text-[var(--marketing-green)] hover:bg-green-50' : ''}`}
-                    >
-                        {isFollowed ? (
-                            <>
-                                <UserCheck size={16} /> Suivi
-                            </>
-                        ) : (
-                            <>
-                                <UserPlus size={16} /> Suivre
-                            </>
-                        )}
-                    </Button>
+                    {!isOwnProfile && (
+                        <Button
+                            onClick={() => followProfile(id)}
+                            disabled={isProcessing}
+                            variant={isFollowed ? "outline" : "primary"}
+                            className={`flex-1 justify-center group ${isFollowed ? 'border-green-600 bg-green-50 text-green-700 hover:bg-red-50 hover:border-red-600 hover:text-red-700' : ''}`}
+                        >
+                            {isProcessing ? '...' : (isFollowed ? (
+                                <>
+                                    <span className="group-hover:hidden flex items-center gap-1"><UserCheck size={16} /> Abonné</span>
+                                    <span className="hidden group-hover:flex items-center gap-1"><UserMinus size={16} /> Désabonner</span>
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus size={16} /> Suivre
+                                </>
+                            ))}
+                        </Button>
+                    )}
                     <Link href={`/network/${id}`} className="flex-1">
                         <Button variant="outline" className="w-full justify-center">Voir</Button>
                     </Link>

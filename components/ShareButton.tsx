@@ -10,7 +10,7 @@ interface ShareButtonProps {
     title: string;
     text?: string;
     className?: string;
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+    variant?: 'primary' | 'outline' | 'ghost';
     size?: 'sm' | 'md' | 'lg';
     iconOnly?: boolean;
 }

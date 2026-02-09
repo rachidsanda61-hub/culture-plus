@@ -1,144 +1,115 @@
-
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getEvents, addEvent as addEventAction, deleteEvent as deleteEventAction, likeEvent as likeEventAction, interestEvent as interestEventAction, EventInput } from '@/app/actions/events';
+import { toast } from 'react-hot-toast';
+import { useNotifications } from './NotificationsContext';
+import { useAuth } from './AuthContext';
 
 export interface Event {
+    id: string;
     title: string;
     category: string;
     date: string;
     location: string;
     slug: string;
-    description?: string;
-    image?: string;
+    description?: string | null;
+    image?: string | null;
+    price?: string | null;
+    startTime?: string | null;
+    endTime?: string | null;
+    organizer?: string | null;
     likes: number;
     interested: number;
 }
 
 interface EventsContextType {
     events: Event[];
-    addEvent: (event: Event) => void;
-    deleteEvent: (slug: string) => void;
-    likeEvent: (slug: string) => void;
-    interestEvent: (slug: string) => void;
+    addEvent: (event: EventInput) => Promise<void>;
+    deleteEvent: (slug: string) => Promise<void>;
+    likeEvent: (slug: string) => Promise<void>;
+    interestEvent: (slug: string) => Promise<void>;
+    isLoading: boolean;
 }
-
-const initialEvents: Event[] = [
-    {
-        title: "Festival de la Mode Nigérienne - FIMA 2026",
-        category: "Mode & Design",
-        date: "12 Déc 2026",
-        location: "Niamey, Palais des Congrès",
-        slug: "fima-2026",
-        description: "Le rendez-vous incontournable de la mode africaine. Défilés, concours et expositions.",
-        likes: 120,
-        interested: 450
-    },
-    {
-        title: "Concert de la Paix - Sahel Tour",
-        category: "Musique",
-        date: "05 Nov 2026",
-        location: "Agadez, Stade Régional",
-        slug: "sahel-tour",
-        description: "Un concert géant pour célébrer la paix et l'unité dans le Sahel avec les plus grands artistes.",
-        image: "https://images.unsplash.com/photo-1514525253440-b393452e8d26?auto=format&fit=crop&q=80&w=800",
-        likes: 340,
-        interested: 890
-    },
-    {
-        title: "Foire Artisanale de Dosso",
-        category: "Foire",
-        date: "12 Mar 2026",
-        location: "Dosso, Place des Artisans",
-        slug: "foire-dosso",
-        description: "Découvrez le savoir-faire des artisans de la région : cuir, poterie, textile.",
-        likes: 45,
-        interested: 120
-    },
-    {
-        title: "Formation : Marketing Digital pour Artistes",
-        category: "Formation",
-        date: "18 Fev 2026",
-        location: "Niamey, Incubateur CIPMEN",
-        slug: "formation-marketing",
-        description: "Apprenez à gérer votre image en ligne et à promouvoir vos œuvres sur les réseaux sociaux.",
-        likes: 89,
-        interested: 200
-    },
-    {
-        title: "Exposition d'Art Touareg Contemporain",
-        category: "Exposition",
-        date: "20 Oct - 05 Nov",
-        location: "Zinder, Centre Culturel",
-        slug: "art-touareg",
-        likes: 67,
-        interested: 150
-    },
-    {
-        title: "Séminaire : Droit d'auteur au Niger",
-        category: "Séminaire",
-        date: "05 Avr 2026",
-        location: "Niamey, Grand Hôtel",
-        slug: "seminaire-droit-auteur",
-        likes: 34,
-        interested: 90
-    },
-    {
-        title: "Atelier d'Écriture Slam & Poésie",
-        category: "Littérature",
-        date: "15 Jan 2026",
-        location: "Niamey, CCFN",
-        slug: "atelier-slam",
-        likes: 56,
-        interested: 110
-    },
-    {
-        title: "Danse Traditionnelle du Manga",
-        category: "Danse",
-        date: "02 Fev 2026",
-        location: "Diffa, Maison de la Culture",
-        slug: "danse-manga",
-        likes: 125,
-        interested: 300
-    },
-    {
-        title: "Projection Plein Air : 'L'Arbre sans fruit'",
-        category: "Cinéma",
-        date: "10 Jan 2026",
-        location: "Maradi, Place Publique",
-        slug: "projection-plein-air",
-        likes: 78,
-        interested: 180
-    }
-];
 
 const EventsContext = createContext<EventsContextType | undefined>(undefined);
 
 export const EventsProvider = ({ children }: { children: ReactNode }) => {
-    const [events, setEvents] = useState<Event[]>(initialEvents);
+    const [events, setEvents] = useState<Event[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { addNotification } = useNotifications();
+    const { user } = useAuth();
 
-    const addEvent = (newEvent: Event) => {
-        setEvents((prev) => [newEvent, ...prev]);
+    const loadEvents = async () => {
+        try {
+            const data = await getEvents();
+            setEvents(data as Event[]);
+        } catch (error) {
+            console.error('Failed to load events', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const deleteEvent = (slug: string) => {
-        setEvents((prev) => prev.filter((event) => event.slug !== slug));
+    useEffect(() => {
+        loadEvents();
+    }, []);
+
+    const addEvent = async (newEvent: EventInput) => {
+        try {
+            const created = await addEventAction(newEvent);
+            setEvents(prev => [created as Event, ...prev]);
+            toast.success('Événement ajouté');
+            addNotification({
+                type: 'event',
+                title: 'Événement publié !',
+                message: `Votre événement "${created.title}" est maintenant en ligne.`,
+                link: '/events',
+                image: created.image || undefined
+            });
+        } catch (error) {
+            toast.error('Erreur lors de l’ajout');
+        }
     };
 
-    const likeEvent = (slug: string) => {
-        setEvents(prev => prev.map(ev =>
-            ev.slug === slug ? { ...ev, likes: ev.likes + 1 } : ev
-        ));
+    const deleteEvent = async (slug: string) => {
+        try {
+            await deleteEventAction(slug);
+            setEvents(prev => prev.filter(ev => ev.slug !== slug));
+            toast.success('Événement supprimé');
+        } catch (error) {
+            toast.error('Erreur lors de la suppression');
+        }
     };
 
-    const interestEvent = (slug: string) => {
-        setEvents(prev => prev.map(ev =>
-            ev.slug === slug ? { ...ev, interested: ev.interested + 1 } : ev
-        ));
+    const likeEvent = async (slug: string) => {
+        if (!user) {
+            toast.error('Connectez-vous pour aimer cet événement');
+            return;
+        }
+        try {
+            const updated = await likeEventAction(slug, user.id);
+            setEvents(prev => prev.map(ev => ev.slug === slug ? updated as Event : ev));
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const interestEvent = async (slug: string) => {
+        if (!user) {
+            toast.error('Connectez-vous pour manifester votre intérêt');
+            return;
+        }
+        try {
+            const updated = await interestEventAction(slug, user.id);
+            setEvents(prev => prev.map(ev => ev.slug === slug ? updated as Event : ev));
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     return (
-        <EventsContext.Provider value={{ events, addEvent, deleteEvent, likeEvent, interestEvent }}>
+        <EventsContext.Provider value={{ events, addEvent, deleteEvent, likeEvent, interestEvent, isLoading }}>
             {children}
         </EventsContext.Provider>
     );
@@ -147,7 +118,14 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
 export const useEvents = () => {
     const context = useContext(EventsContext);
     if (context === undefined) {
-        throw new Error('useEvents must be used within an EventsProvider');
+        return {
+            events: [],
+            addEvent: async () => { },
+            deleteEvent: async () => { },
+            likeEvent: async () => { },
+            interestEvent: async () => { },
+            isLoading: true
+        };
     }
     return context;
 };

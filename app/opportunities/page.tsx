@@ -1,3 +1,4 @@
+'use client';
 
 import React from 'react';
 import { OpportunityCard } from '@/components/OpportunityCard';
@@ -8,7 +9,7 @@ export default function OpportunitiesPage() {
     const { opportunities } = useOpportunities();
 
     return (
-        <main className="min-h-screen bg-[var(--sand-50)] py-12">
+        <main className="min-h-screen bg-[var(--sand-50)] pt-24 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-[var(--marketing-green)] rounded-3xl p-8 mb-12 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
