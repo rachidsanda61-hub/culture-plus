@@ -5,16 +5,11 @@ const prismaClientSingleton = () => {
     const url = (process.env.DATABASE_URL || '').trim();
 
     if (url.startsWith('prisma://') || url.startsWith('prisma+postgres://')) {
-        return new PrismaClient({
-            // @ts-ignore
-            accelerateUrl: url,
-        }).$extends(withAccelerate());
+        // @ts-ignore
+        return new PrismaClient({ datasources: { db: { url } } }).$extends(withAccelerate());
     }
 
-    return new PrismaClient({
-        // @ts-ignore
-        accelerateUrl: url || undefined,
-    });
+    return new PrismaClient();
 };
 
 const globalForPrisma = global as unknown as { prisma: any };
