@@ -148,8 +148,8 @@ function AdsSection() {
     <section className="py-12 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {ads.map(ad => (
-          <a key={ad.id} href={ad.link || '#'} target="_blank" rel="noopener noreferrer" className="block w-full aspect-[4/1] md:aspect-[10/1] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
-            <img src={ad.image} alt="" className="w-full h-full object-cover" />
+          <a key={ad.id} href={ad.link || '#'} title={ad.title || 'Publicité'} target="_blank" rel="noopener noreferrer" className="block w-full aspect-[4/1] md:aspect-[10/1] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+            <img src={ad.image} alt={ad.title || 'Publicité'} className="w-full h-full object-cover" />
           </a>
         ))}
       </div>

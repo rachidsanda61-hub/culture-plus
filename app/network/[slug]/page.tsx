@@ -291,6 +291,7 @@ export default function ProfileDetailPage() {
                                                 </div>
                                                 {isAdmin && (
                                                     <button
+                                                        title="Supprimer ce post"
                                                         onClick={async () => {
                                                             if (confirm('Supprimer ce post ?')) {
                                                                 await adminDeletePost(user!.id, post.id);
@@ -351,13 +352,14 @@ export default function ProfileDetailPage() {
                                                                         <CommentText text={comment.text} />
                                                                         {isAdmin && (
                                                                             <button
+                                                                                title="Supprimer ce commentaire"
                                                                                 onClick={async () => {
                                                                                     if (confirm('Supprimer ce commentaire ?')) {
                                                                                         await adminDeleteComment(user!.id, comment.id);
                                                                                         window.location.reload();
                                                                                     }
                                                                                 }}
-                                                                                className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                                className="ml-auto p-1.5 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                                                             >
                                                                                 <Trash2 size={12} />
                                                                             </button>

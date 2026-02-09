@@ -55,6 +55,7 @@ export const Navbar = () => {
                     <div className="hidden md:flex items-center gap-4">
                         <div className={`relative flex items-center transition-all duration-300 ${showSearch ? 'w-64' : 'w-10'}`}>
                             <button
+                                title="Rechercher"
                                 onClick={() => setShowSearch(!showSearch)}
                                 className={`p-2 rounded-full hover:bg-[var(--sand-100)] transition-colors ${showSearch ? 'text-[var(--marketing-orange)]' : 'text-[var(--charcoal-600)]'}`}
                             >

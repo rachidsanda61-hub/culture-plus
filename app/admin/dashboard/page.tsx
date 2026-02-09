@@ -215,11 +215,11 @@ export default function AdminDashboard() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
                                                 <div className="space-y-2">
                                                     <label className="text-sm font-bold text-gray-700">Titre (Optionnel)</label>
-                                                    <input name="title" className="w-full px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
+                                                    <input name="title" title="Titre du slide" placeholder="Titre..." className="w-full px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-sm font-bold text-gray-700">Ordre</label>
-                                                    <input name="order" type="number" defaultValue="0" className="w-full px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
+                                                    <input name="order" title="Ordre d'affichage" type="number" defaultValue="0" className="w-full px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
                                                 </div>
                                             </div>
 
@@ -270,9 +270,9 @@ export default function AdminDashboard() {
                                                 loadAllAdminData();
                                             }} className="space-y-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <input required name="name" placeholder="Nom du partenaire" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
-                                                    <input name="link" placeholder="Lien (optionnel)" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
-                                                    <input name="order" type="number" placeholder="Ordre" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)] md:col-span-2" />
+                                                    <input required name="name" title="Nom du partenaire" placeholder="Nom du partenaire" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
+                                                    <input name="link" title="Lien partenaire" placeholder="Lien (optionnel)" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
+                                                    <input name="order" title="Ordre d'affichage" type="number" placeholder="Ordre" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)] md:col-span-2" />
                                                 </div>
 
                                                 <ImageUpload
@@ -315,9 +315,9 @@ export default function AdminDashboard() {
                                                 loadAllAdminData();
                                             }} className="space-y-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <input name="title" placeholder="Titre (interne)" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
-                                                    <input name="link" placeholder="Lien de redirection" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
-                                                    <input name="order" type="number" placeholder="Ordre" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)] md:col-span-2" />
+                                                    <input name="title" title="Titre de la publicité" placeholder="Titre (interne)" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
+                                                    <input name="link" title="Lien de redirection" placeholder="Lien de redirection" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]" />
+                                                    <input name="order" title="Ordre d'affichage" type="number" placeholder="Ordre" className="px-4 py-3 rounded-xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-[var(--marketing-orange)] md:col-span-2" />
                                                 </div>
 
                                                 <ImageUpload
@@ -337,7 +337,7 @@ export default function AdminDashboard() {
                                                     <img src={ad.image} alt="" className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-between px-8">
                                                         <span className="text-white font-bold">{ad.title}</span>
-                                                        <button onClick={() => deleteAd('ADMIN', ad.id).then(loadAllAdminData)} className="p-2 bg-red-500 text-white rounded-xl"><Trash2 size={20} /></button>
+                                                        <button title="Supprimer la publicité" onClick={() => deleteAd('ADMIN', ad.id).then(loadAllAdminData)} className="p-2 bg-red-500 text-white rounded-xl"><Trash2 size={20} /></button>
                                                     </div>
                                                 </div>
                                             ))}

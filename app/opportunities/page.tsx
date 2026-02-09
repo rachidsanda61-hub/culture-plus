@@ -5,7 +5,7 @@ import { OpportunityCard } from '@/components/OpportunityCard';
 import { Button } from '@/components/Button';
 import { useOpportunities } from '@/context/OpportunitiesContext';
 import { useAuth } from '@/context/AuthContext';
-import { Plus, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Plus, X, Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/ImageUpload';
 
 export default function OpportunitiesPage() {
@@ -97,7 +97,7 @@ export default function OpportunitiesPage() {
                     <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl my-auto">
                         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                             <h2 className="text-2xl font-bold">Publier une opportunité</h2>
-                            <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            <button onClick={() => setIsFormOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Fermer">
                                 <X size={24} />
                             </button>
                         </div>
@@ -118,6 +118,7 @@ export default function OpportunitiesPage() {
                                 <div className="space-y-1">
                                     <label className="text-sm font-semibold text-gray-700">Catégorie</label>
                                     <select
+                                        title="Sélectionner une catégorie"
                                         value={formData.category}
                                         onChange={e => setFormData({ ...formData, category: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-[var(--marketing-green)] outline-none"
@@ -204,4 +205,3 @@ export default function OpportunitiesPage() {
         </main>
     );
 }
-

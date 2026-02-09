@@ -123,9 +123,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                     </div>
                 </div>
             ) : (
-                <div
+                <button
+                    type="button"
+                    title="Ajouter une photo"
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[var(--marketing-orange)] hover:bg-[var(--marketing-orange)]/5 transition-all group"
+                    className="w-full border-2 border-dashed border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[var(--marketing-orange)] hover:bg-[var(--marketing-orange)]/5 transition-all group"
                 >
                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-[var(--marketing-orange)]/10 group-hover:text-[var(--marketing-orange)] transition-colors">
                         <ImageIcon size={24} />
@@ -134,11 +136,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                         <p className="text-sm font-medium text-gray-600">Cliquez pour ajouter une photo</p>
                         <p className="text-xs text-gray-400 mt-1">Image optimisée automatiquement</p>
                     </div>
-                </div>
+                </button>
             )}
 
             <input
                 type="file"
+                title="Sélectionner un fichier"
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 accept="image/*"

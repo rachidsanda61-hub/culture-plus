@@ -40,10 +40,12 @@ export const HeroCarousel = ({ slides }: HeroCarouselProps) => {
 
     return (
         <div className="relative w-full h-[500px] md:h-[600px] group transition-all duration-500 overflow-hidden rounded-[2rem] md:rounded-[4rem] shadow-2xl">
-            <div
-                style={{ backgroundImage: `url(${slides[currentIndex].image})` }}
-                className="w-full h-full bg-center bg-cover duration-700 ease-in-out"
-            >
+            <div className="w-full h-full relative duration-700 ease-in-out">
+                <img
+                    src={slides[currentIndex].image}
+                    alt={slides[currentIndex].title || "Slide"}
+                    className="w-full h-full object-cover"
+                />
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-8 md:p-16">
                     {slides[currentIndex].title && (
@@ -55,14 +57,22 @@ export const HeroCarousel = ({ slides }: HeroCarouselProps) => {
             </div>
 
             {/* Left Arrow */}
-            <div className="hidden group-hover:block absolute top-[50%] -translate-x-0 translate-y-[-50%] left-5 text-2xl rounded-full p-2 bg-white/20 backdrop-blur-md text-white cursor-pointer hover:bg-white/40 transition-all z-20">
-                <ChevronLeft onClick={prevSlide} size={30} />
-            </div>
+            <button
+                title="Précédent"
+                onClick={prevSlide}
+                className="hidden group-hover:block absolute top-[50%] -translate-x-0 translate-y-[-50%] left-5 text-2xl rounded-full p-2 bg-white/20 backdrop-blur-md text-white cursor-pointer hover:bg-white/40 transition-all z-20"
+            >
+                <ChevronLeft size={30} />
+            </button>
 
             {/* Right Arrow */}
-            <div className="hidden group-hover:block absolute top-[50%] -translate-x-0 translate-y-[-50%] right-5 text-2xl rounded-full p-2 bg-white/20 backdrop-blur-md text-white cursor-pointer hover:bg-white/40 transition-all z-20">
-                <ChevronRight onClick={nextSlide} size={30} />
-            </div>
+            <button
+                title="Suivant"
+                onClick={nextSlide}
+                className="hidden group-hover:block absolute top-[50%] -translate-x-0 translate-y-[-50%] right-5 text-2xl rounded-full p-2 bg-white/20 backdrop-blur-md text-white cursor-pointer hover:bg-white/40 transition-all z-20"
+            >
+                <ChevronRight size={30} />
+            </button>
 
             {/* Dots */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
