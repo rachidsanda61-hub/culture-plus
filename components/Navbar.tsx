@@ -168,6 +168,11 @@ export const Navbar = () => {
                                     <Link href="/settings/profile" onClick={() => setIsOpen(false)}>
                                         <Button variant="outline" className="w-full">Paramètres</Button>
                                     </Link>
+                                    {(user as any).appRole === 'ADMIN' && (
+                                        <Link href="/admin/dashboard" onClick={() => setIsOpen(false)}>
+                                            <Button variant="outline" className="w-full text-purple-600 border-purple-100 font-bold">Dashboard Admin</Button>
+                                        </Link>
+                                    )}
                                     <Button variant="outline" className="w-full text-red-500 border-red-100" onClick={() => { logout(); setIsOpen(false); }}>Déconnexion</Button>
                                 </>
                             ) : (

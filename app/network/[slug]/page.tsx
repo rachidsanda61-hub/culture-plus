@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { MapPin, UserPlus, UserCheck, UserMinus, Star, MessageSquare, Heart, Image as ImageIcon, Send, Loader2 } from 'lucide-react';
 import { ShareButton } from '@/components/ShareButton';
 import { ImageUpload } from '@/components/ImageUpload';
+import { adminDeletePost, adminDeleteComment, adminDeleteReview } from '@/app/actions/admin';
+import { Trash2 } from 'lucide-react';
 
 const formatDate = (date: Date | string) => {
     const d = new Date(date);
@@ -54,6 +56,7 @@ export default function ProfileDetailPage() {
     }
 
     const isOwnProfile = user?.id === profile.id;
+    const isAdmin = (user as any)?.appRole === 'ADMIN';
 
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -284,11 +287,21 @@ export default function ProfileDetailPage() {
                                                     {profile.image ? <img src={profile.image} alt="" className="w-full h-full object-cover" /> : null}
                                                 </div>
                                                 <div>
-                                                    <Link href={`/network/${post.authorId}`} className="font-bold text-gray-900 text-sm hover:underline">
-                                                        {profile.name}
-                                                    </Link>
                                                     <span className="block text-xs text-gray-400">{formatDate(post.createdAt)}</span>
                                                 </div>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (confirm('Supprimer ce post ?')) {
+                                                                await adminDeletePost(user!.id, post.id);
+                                                                window.location.reload();
+                                                            }
+                                                        }}
+                                                        className="ml-auto p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
                                             </div>
 
                                             <div className="px-4 pb-2">
@@ -336,6 +349,19 @@ export default function ProfileDetailPage() {
                                                                             {comment.author.name}
                                                                         </Link>
                                                                         <CommentText text={comment.text} />
+                                                                        {isAdmin && (
+                                                                            <button
+                                                                                onClick={async () => {
+                                                                                    if (confirm('Supprimer ce commentaire ?')) {
+                                                                                        await adminDeleteComment(user!.id, comment.id);
+                                                                                        window.location.reload();
+                                                                                    }
+                                                                                }}
+                                                                                className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                            >
+                                                                                <Trash2 size={12} />
+                                                                            </button>
+                                                                        )}
                                                                     </div>
                                                                     <div className="flex items-center gap-4 mt-1 ml-1">
                                                                         <span className="text-[10px] text-gray-400">{formatDate(comment.createdAt)}</span>
@@ -455,6 +481,19 @@ export default function ProfileDetailPage() {
                                                 </Link>
                                             </div>
                                             <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={async () => {
+                                                        if (confirm('Supprimer cet avis ?')) {
+                                                            await adminDeleteReview(user!.id, review.id);
+                                                            window.location.reload();
+                                                        }
+                                                    }}
+                                                    className="p-1 text-red-400 hover:text-red-500 ml-2"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
                                         </div>
                                         <div className="flex text-yellow-400 mb-2">
                                             {[...Array(5)].map((_, i) => (

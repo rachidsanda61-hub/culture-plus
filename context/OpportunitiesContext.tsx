@@ -1,24 +1,34 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getOpportunities, createOpportunity, deleteOpportunity as deleteOpportunityAction } from '@/app/actions/opportunities';
+import { getOpportunities, createOpportunity, updateOpportunity, deleteOpportunity as deleteOpportunityAction, OpportunityInput } from '@/app/actions/opportunities';
 import { toast } from 'react-hot-toast';
+import { useAuth } from './AuthContext';
 
 export interface Opportunity {
     id: string;
     title: string;
-    type: string;
+    description: string | null;
+    category: string;
     deadline: string;
-    amount: string;
-    organization: string;
-    link?: string | null;
-    description?: string | null;
+    location: string | null;
+    image: string | null;
+    link: string | null;
+    authorId: string;
+    author: {
+        id: string;
+        name: string | null;
+        image: string | null;
+    };
+    createdAt: Date;
 }
 
 interface OpportunitiesContextType {
     opportunities: Opportunity[];
-    addOpportunity: (opp: Omit<Opportunity, 'id'>) => void;
-    deleteOpportunity: (id: string) => void;
+    addOpportunity: (opp: OpportunityInput) => Promise<void>;
+    editOpportunity: (id: string, data: Partial<OpportunityInput>) => Promise<void>;
+    deleteOpportunity: (id: string) => Promise<void>;
+    isLoading: boolean;
 }
 
 const OpportunitiesContext = createContext<OpportunitiesContextType | undefined>(undefined);
@@ -26,11 +36,12 @@ const OpportunitiesContext = createContext<OpportunitiesContextType | undefined>
 export const OpportunitiesProvider = ({ children }: { children: React.ReactNode }) => {
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { user } = useAuth();
 
     const loadOpportunities = async () => {
         try {
             const data = await getOpportunities();
-            setOpportunities(data as Opportunity[]);
+            setOpportunities(data as unknown as Opportunity[]);
         } catch (error) {
             console.error("Failed to load opportunities", error);
         } finally {
@@ -42,20 +53,38 @@ export const OpportunitiesProvider = ({ children }: { children: React.ReactNode 
         loadOpportunities();
     }, []);
 
-    const addOpportunity = async (opp: Omit<Opportunity, 'id'>) => {
+    const addOpportunity = async (opp: OpportunityInput) => {
+        if (!user) {
+            toast.error("Vous devez être connecté");
+            return;
+        }
         try {
-            const newOpp = await createOpportunity(opp);
-            setOpportunities(prev => [newOpp, ...prev]);
-            toast.success("Opportunité ajoutée avec succès");
+            await createOpportunity(user.id, opp);
+            await loadOpportunities();
+            toast.success("Opportunité publiée immédiatement");
         } catch (error) {
             console.error("Failed to create opportunity", error);
             toast.error("Erreur lors de la création");
         }
     };
 
-    const deleteOpportunity = async (id: string) => {
+    const editOpportunity = async (id: string, data: Partial<OpportunityInput>) => {
+        if (!user) return;
         try {
-            await deleteOpportunityAction(id);
+            await updateOpportunity(user.id, id, data);
+            await loadOpportunities();
+            toast.success("Mise à jour réussie");
+        } catch (error) {
+            console.error("Failed to update opportunity", error);
+            toast.error("Erreur lors de la modification");
+        }
+    };
+
+    const deleteOpportunity = async (id: string) => {
+        if (!user) return;
+        try {
+            const userRole = (user as any).appRole || 'USER';
+            await deleteOpportunityAction(user.id, userRole, id);
             setOpportunities(prev => prev.filter(o => o.id !== id));
             toast.success("Opportunité supprimée");
         } catch (error) {
@@ -65,7 +94,7 @@ export const OpportunitiesProvider = ({ children }: { children: React.ReactNode 
     };
 
     return (
-        <OpportunitiesContext.Provider value={{ opportunities, addOpportunity, deleteOpportunity }}>
+        <OpportunitiesContext.Provider value={{ opportunities, addOpportunity, editOpportunity, deleteOpportunity, isLoading }}>
             {children}
         </OpportunitiesContext.Provider>
     );
@@ -76,9 +105,12 @@ export const useOpportunities = () => {
     if (!context) {
         return {
             opportunities: [],
-            addOpportunity: () => { },
-            deleteOpportunity: () => { }
+            addOpportunity: async () => { },
+            editOpportunity: async () => { },
+            deleteOpportunity: async () => { },
+            isLoading: true
         };
     }
     return context;
 };
+

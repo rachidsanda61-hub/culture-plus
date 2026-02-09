@@ -6,13 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
+enum AppRole {
+  USER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
-  password      String?   // Optional for now as we might have social login later, but required for manual registration
+  password      String?
   phone         String?   @unique
   name          String?
-  role          String    @default("public") // 'artist', 'public', 'promoter'
+  role          String    @default("public") // This is the 'profile type' (artist, promoter, etc)
+  appRole       AppRole   @default(USER)     // This is the 'system access' role (ADMIN, USER)
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -40,6 +46,10 @@ model User {
   
   followedBy    Follow[]  @relation("followedBy")
   following     Follow[]  @relation("following")
+
+  // New relations for content creation
+  opportunities Opportunity[]
+  events        Event[]
 }
 
 model Follow {
@@ -71,12 +81,16 @@ model Notification {
 model Opportunity {
   id            String   @id @default(cuid())
   title         String
-  type          String
-  deadline      String   // Keeping as string to match existing frontend format for now, or could change to DateTime
-  amount        String
-  organization  String
-  link          String?
   description   String?
+  category      String   // grant, open call, training, residency
+  deadline      String
+  location      String?  // Country / Region
+  image         String?
+  link          String?  // Contact / link
+  
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -86,21 +100,52 @@ model Event {
   slug          String   @unique
   title         String
   category      String
-  date          String   // Keeping as string for frontend compatibility
+  date          String
   location      String
   description   String?
   image         String?
-  price         String?   @default("Gratuit") // e.g. "5000 FCFA" or "Gratuit"
-  startTime     String?   // e.g. "18:00"
-  endTime       String?   // e.g. "21:00"
+  price         String?   @default("Gratuit")
+  startTime     String?
+  endTime       String?
   organizer     String?   
   likes         Int      @default(0)
   interested    Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  authorId      String?  // Optional for backward compatibility, will make required later
+  author        User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
   likes_list    EventLike[]
   interested_list EventInterest[]
+}
+
+model HeroSlide {
+  id        String   @id @default(cuid())
+  image     String
+  title     String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Partner {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String
+  link      String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Ad {
+  id        String   @id @default(cuid())
+  title     String?
+  image     String
+  link      String?
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model EventLike {
@@ -134,7 +179,7 @@ model Post {
   updatedAt DateTime  @updatedAt
   
   authorId  String
-  author    User      @relation(fields: [authorId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments  Comment[]
   likes_list PostLike[]
 }
@@ -156,13 +201,13 @@ model Comment {
   createdAt DateTime @default(now())
   
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   
   postId    String
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   parentId  String?
-  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
 }
 
@@ -173,10 +218,10 @@ model Review {
   createdAt   DateTime @default(now())
   
   authorId    String
-  author      User     @relation("WrittenReviews", fields: [authorId], references: [id])
+  author      User     @relation("WrittenReviews", fields: [authorId], references: [id], onDelete: Cascade)
   
   targetId    String
-  target      User     @relation("ReceivedReviews", fields: [targetId], references: [id])
+  target      User     @relation("ReceivedReviews", fields: [targetId], references: [id], onDelete: Cascade)
 }
 
 model Message {
@@ -186,8 +231,9 @@ model Message {
   read        Boolean  @default(false)
   
   senderId    String
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   
   receiverId  String
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 }
+

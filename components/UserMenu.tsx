@@ -64,6 +64,17 @@ export const UserMenu = () => {
                             <Settings size={18} className="text-gray-400 group-hover:text-[var(--marketing-orange)]" />
                             <span>Paramètres</span>
                         </Link>
+
+                        {(user as any).appRole === 'ADMIN' && (
+                            <Link
+                                href="/admin/dashboard"
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-purple-600 hover:bg-purple-50 transition-colors group"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                <Activity size={18} className="text-purple-400 group-hover:text-purple-600" />
+                                <span className="font-bold">Dashboard Admin</span>
+                            </Link>
+                        )}
                     </div>
 
                     <div className="p-2 border-t border-gray-50">
