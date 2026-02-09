@@ -40,6 +40,7 @@ export async function login(email: string, password?: string) {
             email: user.email,
             name: user.name,
             role: user.role,
+            appRole: user.appRole,
             image: user.image
         };
     } catch (error: any) {
@@ -83,6 +84,7 @@ export async function register(data: { name: string, email: string, phone?: stri
             email: user.email,
             name: user.name,
             role: user.role,
+            appRole: user.appRole,
             image: user.image
         };
     } catch (error: any) {

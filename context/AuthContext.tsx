@@ -10,6 +10,7 @@ export interface User {
     email: string;
     name: string | null;
     role: string;
+    appRole: string;
     image?: string | null;
 }
 

@@ -419,6 +419,7 @@ export default function ProfileDetailPage() {
                                                                         autoFocus
                                                                     />
                                                                     <button
+                                                                        title="Envoyer la réponse"
                                                                         onClick={() => handleReplySubmit(post.id, comment.id)}
                                                                         className="p-1.5 bg-[var(--marketing-orange)] text-white rounded-full hover:bg-[var(--marketing-orange)]/90 transition-colors"
                                                                     >
@@ -452,6 +453,7 @@ export default function ProfileDetailPage() {
                                                         onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(post.id)}
                                                     />
                                                     <button
+                                                        title="Envoyer le commentaire"
                                                         onClick={() => handleCommentSubmit(post.id)}
                                                         className="p-2 text-[var(--marketing-orange)] hover:bg-[var(--marketing-orange)]/5 rounded-full transition-colors"
                                                     >
@@ -519,6 +521,7 @@ export default function ProfileDetailPage() {
                             <h4 className="font-bold text-sm mb-2 text-gray-700">Laisser un avis rapide</h4>
                             <form onSubmit={handleReviewSubmit} className="space-y-3">
                                 <select
+                                    title="Note"
                                     className="w-full px-3 py-2 border rounded-lg text-sm bg-gray-50 outline-none focus:ring-1 focus:ring-[var(--marketing-orange)]"
                                     value={reviewForm.rating}
                                     onChange={e => setReviewForm({ ...reviewForm, rating: Number(e.target.value) })}
