@@ -401,8 +401,8 @@ export default function ProfileDetailPage() {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
 
                                                 {hasMoreComments && (
                                                     <button
