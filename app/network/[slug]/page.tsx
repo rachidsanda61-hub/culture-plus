@@ -6,11 +6,11 @@ import { useProfiles } from '@/context/ProfilesContext';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
-import { MapPin, UserPlus, UserCheck, UserMinus, Star, MessageSquare, Heart, Image as ImageIcon, Send, Loader2 } from 'lucide-react';
+import { MapPin, UserPlus, UserCheck, UserMinus, Star, MessageSquare, Heart, Image as ImageIcon, Send, Loader2, Trash2 } from 'lucide-react';
 import { ShareButton } from '@/components/ShareButton';
 import { ImageUpload } from '@/components/ImageUpload';
 import { adminDeletePost, adminDeleteComment, adminDeleteReview } from '@/app/actions/admin';
-import { Trash2 } from 'lucide-react';
+import { ProfileImageModal } from '@/components/ProfileImageModal';
 
 const formatDate = (date: Date | string) => {
     const d = new Date(date);
@@ -23,7 +23,7 @@ const formatDate = (date: Date | string) => {
 
 export default function ProfileDetailPage() {
     const { slug } = useParams();
-    const { getProfileById, followProfile, addReview, addPost, addComment, likePost, isLoading, isProcessingFollow } = useProfiles();
+    const { getProfileById, followProfile, addReview, addPost, addComment, likePost, isLoading, isProcessingFollow, updateProfile } = useProfiles();
     const { user } = useAuth();
     const profile = getProfileById(slug as string);
 
@@ -32,6 +32,7 @@ export default function ProfileDetailPage() {
     const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
     const [activeTab, setActiveTab] = useState<'posts' | 'reviews'>('posts');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
     const isFollowProcessing = profile ? isProcessingFollow(profile.id) : false;
 
@@ -116,6 +117,10 @@ export default function ProfileDetailPage() {
         }
     };
 
+    const handleImageUpdate = async (base64: string) => {
+        await updateProfile({ image: base64 });
+    };
+
     const CommentText = ({ text }: { text: string }) => {
         const parts = text.split(/(@\w+)/g);
         return (
@@ -133,6 +138,16 @@ export default function ProfileDetailPage() {
 
     return (
         <main className="min-h-screen bg-[var(--sand-50)] pt-24 pb-20">
+            {profile && (
+                <ProfileImageModal
+                    isOpen={isImageModalOpen}
+                    onClose={() => setIsImageModalOpen(false)}
+                    image={profile.image || null}
+                    name={profile.name}
+                    isOwner={isOwnProfile}
+                    onUpdate={handleImageUpdate}
+                />
+            )}
             <div className="max-w-4xl mx-auto px-4">
 
                 {/* Profile Header */}
@@ -140,7 +155,10 @@ export default function ProfileDetailPage() {
                     <div className="h-32 bg-gradient-to-r from-[var(--marketing-orange)] to-[var(--marketing-orange-light)]"></div>
                     <div className="px-8 pb-8">
                         <div className="relative flex justify-between items-end -mt-12 mb-4">
-                            <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md">
+                            <button
+                                onClick={() => setIsImageModalOpen(true)}
+                                className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 cursor-pointer relative group"
+                            >
                                 {profile.image ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img src={profile.image} alt={profile.name} className="w-full h-full object-cover" />
@@ -149,7 +167,12 @@ export default function ProfileDetailPage() {
                                         {profile.name[0]}
                                     </div>
                                 )}
-                            </div>
+                                {isOwnProfile && (
+                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <ImageIcon className="text-white" size={24} />
+                                    </div>
+                                )}
+                            </button>
                             <div className="flex gap-2">
                                 {!isOwnProfile && (
                                     <Button

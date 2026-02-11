@@ -1,5 +1,5 @@
-
 import React from 'react';
+import Link from 'next/link';
 import { Calendar, DollarSign, ArrowUpRight, X, ExternalLink, Trash2, Edit2, MapPin } from 'lucide-react';
 import { Button } from './Button';
 import { useState } from 'react';
@@ -60,12 +60,12 @@ export const OpportunityCard = ({ id, title, category, deadline, location, link,
                     {title}
                 </h3>
 
-                <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
+                <Link href={`/network/${author.id}`} className="flex items-center gap-2 text-xs text-gray-500 mb-4 hover:underline z-10 relative w-fit">
                     <div className="w-5 h-5 rounded-full bg-gray-200 overflow-hidden">
                         {author.image ? <img src={author.image} alt="" className="w-full h-full object-cover" /> : null}
                     </div>
                     <span>{author.name}</span>
-                </div>
+                </Link>
 
                 <div className="mt-auto w-full space-y-4">
                     <div className="flex flex-col gap-2 text-sm text-[var(--charcoal-600)]">
@@ -111,14 +111,14 @@ export const OpportunityCard = ({ id, title, category, deadline, location, link,
                                     {category}
                                 </div>
                                 <h2 className="text-2xl font-bold text-[var(--charcoal-900)]">{title}</h2>
-                                <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
+                                <Link href={`/network/${author.id}`} className="flex items-center gap-2 text-sm text-gray-500 mt-2 hover:underline w-fit">
                                     <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden">
                                         {author.image ? <img src={author.image} alt="" className="w-full h-full object-cover" /> : null}
                                     </div>
                                     <span>Publié par {author.name}</span>
-                                </div>
+                                </Link>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Fermer">
                                 <X size={24} />
                             </button>
                         </div>

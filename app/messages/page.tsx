@@ -5,8 +5,9 @@ import { useMessages } from '@/context/MessagesContext';
 import { useProfiles } from '@/context/ProfilesContext';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/Button';
-import { Send, User, Loader2 } from 'lucide-react';
+import { Send, User, Loader2, ArrowLeft, Mail } from 'lucide-react';
 
 function MessagesContent() {
     const { conversations, sendMessage, markAsRead, isLoading } = useMessages();
@@ -90,14 +91,14 @@ function MessagesContent() {
                                         className={`w-full p-4 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 ${activeConversationId === conv.partnerId ? 'bg-orange-50 hover:bg-orange-50' : ''}`}
                                     >
                                         <div className="relative">
-                                            <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100">
+                                            <Link href={`/network/${profile?.id}`} onClick={(e) => e.stopPropagation()} className="block w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100 hover:opacity-80 transition-opacity">
                                                 {profile?.image ? (
                                                     <img src={profile.image} alt="" className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 font-bold">{profile?.name.charAt(0) || '?'}</div>
                                                 )}
-                                            </div>
-                                            {unread && <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>}
+                                            </Link>
+                                            {unread && <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white pointer-events-none"></div>}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-baseline mb-1">
@@ -128,18 +129,20 @@ function MessagesContent() {
                             <>
                                 {/* Chat Header */}
                                 <div className="p-4 bg-white border-b border-gray-100 flex items-center gap-3">
-                                    <button onClick={() => setActiveConversationId(null)} className="md:hidden text-gray-400 p-1">
+                                    <button onClick={() => setActiveConversationId(null)} className="md:hidden text-gray-400 p-1" title="Retour aux conversations">
                                         <ArrowLeft size={20} />
                                     </button>
-                                    <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100">
+                                    <Link href={`/network/${activeProfile?.id}`} className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100 hover:opacity-80 transition-opacity">
                                         {activeProfile?.image ? (
                                             <img src={activeProfile.image} alt="" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 font-bold">{activeProfile?.name.charAt(0) || <User size={18} />}</div>
                                         )}
-                                    </div>
+                                    </Link>
                                     <div>
-                                        <h3 className="font-bold text-gray-900">{activeProfile?.name || 'Conversation'}</h3>
+                                        <Link href={`/network/${activeProfile?.id}`} className="hover:underline">
+                                            <h3 className="font-bold text-gray-900">{activeProfile?.name || 'Conversation'}</h3>
+                                        </Link>
                                         <p className="text-[10px] text-[var(--marketing-green)] font-bold uppercase tracking-wider">En ligne</p>
                                     </div>
                                 </div>
@@ -204,7 +207,7 @@ function MessagesContent() {
     );
 }
 
-import { ArrowLeft, Mail } from 'lucide-react';
+
 
 export default function MessagesPage() {
     return (

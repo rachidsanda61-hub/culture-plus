@@ -28,8 +28,8 @@ export const ProfileCard = ({ id, name, role, location, image, tags, followers, 
         <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition-all p-6 flex flex-col items-center text-center">
 
             {/* Avatar */}
-            <div className="relative mb-4">
-                <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden border-4 border-white shadow-sm">
+            <Link href={`/network/${id}`} className="relative mb-4 block group">
+                <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden border-4 border-white shadow-sm group-hover:scale-105 transition-transform">
                     {image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={image} alt={name} className="w-full h-full object-cover" />
@@ -39,12 +39,14 @@ export const ProfileCard = ({ id, name, role, location, image, tags, followers, 
                         </div>
                     )}
                 </div>
-                <div className="absolute -bottom-2 px-2 py-0.5 bg-[var(--sand-100)] rounded-full text-xs font-semibold text-[var(--marketing-orange)] border border-[var(--marketing-orange-light)]">
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[var(--sand-100)] rounded-full text-xs font-semibold text-[var(--marketing-orange)] border border-[var(--marketing-orange-light)] whitespace-nowrap">
                     {rating} ★
                 </div>
-            </div>
+            </Link>
 
-            <h3 className="text-xl font-bold text-[var(--charcoal-900)] mb-1">{name}</h3>
+            <Link href={`/network/${id}`} className="hover:underline">
+                <h3 className="text-xl font-bold text-[var(--charcoal-900)] mb-1">{name}</h3>
+            </Link>
             <p className="text-[var(--marketing-orange)] font-medium text-sm mb-2">{role}</p>
 
             <div className="flex items-center gap-1 text-gray-500 text-sm mb-4">
