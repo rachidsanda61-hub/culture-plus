@@ -220,9 +220,25 @@ export async function followProfile(userId: string, targetId: string) {
 }
 
 export async function addReview(authorId: string, targetId: string, data: { rating: number, text: string }) {
+    if (authorId === targetId) {
+        throw new Error("Vous ne pouvez pas laisser un avis sur votre propre profil.");
+    }
+
     try {
-        const review = await prisma.review.create({
-            data: {
+        // Upsert review (create or update)
+        const review = await prisma.review.upsert({
+            where: {
+                authorId_targetId: {
+                    authorId,
+                    targetId
+                }
+            },
+            update: {
+                rating: data.rating,
+                text: data.text,
+                createdAt: new Date() // Update timestamp to show it's recent
+            },
+            create: {
                 authorId,
                 targetId,
                 rating: data.rating,
@@ -230,14 +246,38 @@ export async function addReview(authorId: string, targetId: string, data: { rati
             }
         });
 
-        // Notify target user
-        if (authorId !== targetId) {
+        // Recalculate average rating
+        const allReviews = await prisma.review.findMany({
+            where: { targetId },
+            select: { rating: true }
+        });
+
+        const totalRating = allReviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
+        const averageRating = Number((totalRating / allReviews.length).toFixed(1));
+
+        await prisma.user.update({
+            where: { id: targetId },
+            data: { rating: averageRating }
+        });
+
+        // Notify target user (only if it's a new review, or maybe notify on update too? let's stick to simple "New review" style for now)
+        // Check if notification already exists to avoid spamming on updates
+        const existingNotif = await prisma.notification.findFirst({
+            where: {
+                userId: targetId,
+                type: 'review',
+                link: `/network/${targetId}`, // Ideally should link to review anchor but simple link works
+                read: false
+            }
+        });
+
+        if (!existingNotif) {
             await prisma.notification.create({
                 data: {
                     userId: targetId,
                     type: 'review',
                     title: 'Nouvel avis',
-                    message: 'Vous avez reçu un nouvel avis.',
+                    message: 'Vous as reçu un avis sur votre profil.',
                     link: `/network/${targetId}`,
                     read: false
                 }
@@ -249,6 +289,51 @@ export async function addReview(authorId: string, targetId: string, data: { rati
     } catch (error) {
         console.error('Failed to add review:', error);
         throw new Error('Failed to add review');
+    }
+}
+
+export async function deleteReview(reviewId: string, userId: string) {
+    try {
+        const review = await prisma.review.findUnique({
+            where: { id: reviewId },
+            include: { author: true }
+        });
+
+        if (!review) throw new Error("Avis non trouvé");
+
+        // Check permissions: author can delete, admin can delete
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const isAdmin = user?.appRole === 'ADMIN';
+
+        if (review.authorId !== userId && !isAdmin) {
+            throw new Error("Non autorisé à supprimer cet avis");
+        }
+
+        const targetId = review.targetId;
+
+        await prisma.review.delete({
+            where: { id: reviewId }
+        });
+
+        // Recalculate average rating
+        const allReviews = await prisma.review.findMany({
+            where: { targetId },
+            select: { rating: true }
+        });
+
+        const totalRating = allReviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0);
+        const averageRating = allReviews.length > 0 ? Number((totalRating / allReviews.length).toFixed(1)) : 0;
+
+        await prisma.user.update({
+            where: { id: targetId },
+            data: { rating: averageRating }
+        });
+
+        revalidatePath(`/network/${targetId}`);
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to delete review:', error);
+        throw new Error('Failed to delete review');
     }
 }
 

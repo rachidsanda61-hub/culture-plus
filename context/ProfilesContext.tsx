@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getProfiles, followProfile as followProfileAction, updateProfile as updateProfileAction, addReview as addReviewAction, addPost as addPostAction, addComment as addCommentAction, likePost as likePostAction } from '@/app/actions/profiles';
+import { getProfiles, followProfile as followProfileAction, updateProfile as updateProfileAction, addReview as addReviewAction, deleteReview as deleteReviewAction, addPost as addPostAction, addComment as addCommentAction, likePost as likePostAction } from '@/app/actions/profiles';
 import { useAuth } from './AuthContext';
 import { toast } from 'react-hot-toast';
 import { useNotifications } from './NotificationsContext';
@@ -57,6 +57,7 @@ interface ProfilesContextType {
     followProfile: (targetId: string) => Promise<void>;
     updateProfile: (data: { name?: string, bio?: string, image?: string, location?: string, tags?: string[] }) => Promise<void>;
     addReview: (targetId: string, review: { rating: number; text: string }) => Promise<void>;
+    deleteReview: (reviewId: string) => Promise<void>;
     addPost: (content: string, image?: string) => Promise<void>;
     addComment: (postId: string, text: string, parentId?: string) => Promise<void>;
     likePost: (postId: string) => Promise<void>;
@@ -145,8 +146,19 @@ export const ProfilesProvider = ({ children }: { children: ReactNode }) => {
             await addReviewAction(user.id, targetId, reviewData);
             loadProfiles();
             toast.success('Avis publié');
-        } catch (error) {
-            toast.error('Erreur');
+        } catch (error: any) {
+            toast.error(error.message || 'Erreur');
+        }
+    };
+
+    const deleteReview = async (reviewId: string) => {
+        try {
+            if (!user) return;
+            await deleteReviewAction(reviewId, user.id);
+            loadProfiles();
+            toast.success('Avis supprimé');
+        } catch (error: any) {
+            toast.error(error.message || 'Erreur');
         }
     };
 
@@ -190,7 +202,7 @@ export const ProfilesProvider = ({ children }: { children: ReactNode }) => {
     const isProcessingFollow = (id: string) => followingIds.has(id);
 
     return (
-        <ProfilesContext.Provider value={{ profiles, filteredProfiles, searchQuery, setSearchQuery, followProfile, updateProfile, addReview, addPost, addComment, likePost, getProfileById, isLoading, isProcessingFollow }}>
+        <ProfilesContext.Provider value={{ profiles, filteredProfiles, searchQuery, setSearchQuery, followProfile, updateProfile, addReview, deleteReview, addPost, addComment, likePost, getProfileById, isLoading, isProcessingFollow }}>
             {children}
         </ProfilesContext.Provider>
     );
@@ -207,6 +219,7 @@ export const useProfiles = () => {
             followProfile: async () => { },
             updateProfile: async () => { },
             addReview: async () => { },
+            deleteReview: async () => { },
             addPost: async () => { },
             addComment: async () => { },
             likePost: async () => { },

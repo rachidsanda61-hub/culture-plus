@@ -23,7 +23,7 @@ const formatDate = (date: Date | string) => {
 
 export default function ProfileDetailPage() {
     const { slug } = useParams();
-    const { getProfileById, followProfile, addReview, addPost, addComment, likePost, isLoading, isProcessingFollow, updateProfile } = useProfiles();
+    const { getProfileById, followProfile, addReview, deleteReview, addPost, addComment, likePost, isLoading, isProcessingFollow, updateProfile } = useProfiles();
     const { user } = useAuth();
     const profile = getProfileById(slug as string);
 
@@ -492,45 +492,77 @@ export default function ProfileDetailPage() {
                             </>
                         ) : (
                             /* Reviews Tab Content */
-                            <div className="space-y-4">
-                                {profile.reviews.length === 0 && (
-                                    <div className="text-center py-8 text-gray-500 italic">Soyez le premier à donner votre avis.</div>
-                                )}
-                                {profile.reviews.map((review) => (
-                                    <div key={review.id} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                                        <div className="flex justify-between items-start mb-2 text-left">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                                                    {review.author.image ? <img src={review.author.image} alt="" className="w-full h-full object-cover" /> : null}
-                                                </div>
-                                                <Link href={`/network/${review.author.id}`} className="font-bold text-gray-900 hover:underline">
-                                                    {review.author.name}
-                                                </Link>
-                                            </div>
-                                            <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={async () => {
-                                                        if (confirm('Supprimer cet avis ?')) {
-                                                            await adminDeleteReview(user!.id, review.id);
-                                                            window.location.reload();
-                                                        }
-                                                    }}
-                                                    className="p-1 text-red-400 hover:text-red-500 ml-2"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="flex text-yellow-400 mb-2">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star key={i} size={14} className={i < review.rating ? "fill-current" : "text-gray-300"} />
-                                            ))}
-                                        </div>
-                                        <p className="text-gray-600 text-sm text-left">{review.text}</p>
+                            <div className="space-y-6">
+                                {/* Reviews Summary */}
+                                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-[var(--charcoal-900)]">Avis & Notes</h3>
+                                        <p className="text-gray-500 text-sm">Ce que les gens pensent </p>
                                     </div>
-                                ))}
+                                    <div className="text-right">
+                                        <div className="flex items-center gap-2 justify-end mb-1">
+                                            <span className="text-3xl font-bold text-[var(--charcoal-900)]">{profile.rating}</span>
+                                            <div className="flex text-yellow-400">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star key={i} size={20} className={i < Math.round(profile.rating) ? "fill-current" : "text-gray-200"} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-400 text-sm">{profile.reviews.length} avis</p>
+                                    </div>
+                                </div>
+
+                                {profile.reviews.length === 0 && (
+                                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400">
+                                        <Star size={48} className="mx-auto mb-4 opacity-20" />
+                                        <p>Aucun avis pour le moment.</p>
+                                        {!isOwnProfile && <p className="text-sm">Soyez le premier à donner votre avis !</p>}
+                                    </div>
+                                )}
+
+                                {profile.reviews.map((review) => {
+                                    const canDelete = (user?.id === review.author.id) || isAdmin;
+                                    return (
+                                        <div key={review.id} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <Link href={`/network/${review.author.id}`} className="block w-10 h-10 rounded-full bg-gray-200 overflow-hidden hover:opacity-80 transition-opacity">
+                                                        {review.author.image ? <img src={review.author.image} alt="" className="w-full h-full object-cover" /> : (
+                                                            <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">{review.author.name[0]}</div>
+                                                        )}
+                                                    </Link>
+                                                    <div>
+                                                        <Link href={`/network/${review.author.id}`} className="font-bold text-gray-900 hover:underline block">
+                                                            {review.author.name}
+                                                        </Link>
+                                                        <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
+                                                    </div>
+                                                </div>
+                                                {canDelete && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (confirm('Supprimer cet avis ?')) {
+                                                                await deleteReview(review.id);
+                                                            }
+                                                        }}
+                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Supprimer l'avis"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="flex text-yellow-400 mb-3">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star key={i} size={16} className={i < review.rating ? "fill-current" : "text-gray-200"} />
+                                                ))}
+                                            </div>
+                                            <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">{review.text}</p>
+                                        </div>
+                                    );
+                                })}
                             </div>
+
                         )}
 
                     </div>
@@ -543,30 +575,41 @@ export default function ProfileDetailPage() {
                                 Soutenez cet artiste en laissant un avis ou en partageant son profil.
                             </p>
 
-                            <h4 className="font-bold text-sm mb-2 text-gray-700">Laisser un avis rapide</h4>
-                            <form onSubmit={handleReviewSubmit} className="space-y-3">
-                                <select
-                                    title="Note"
-                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-gray-50 outline-none focus:ring-1 focus:ring-[var(--marketing-orange)]"
-                                    value={reviewForm.rating}
-                                    onChange={e => setReviewForm({ ...reviewForm, rating: Number(e.target.value) })}
-                                >
-                                    <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                                    <option value="4">⭐⭐⭐⭐ Très bien</option>
-                                    <option value="3">⭐⭐⭐ Bien</option>
-                                </select>
-                                <textarea
-                                    required
-                                    rows={2}
-                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-gray-50 outline-none focus:ring-1 focus:ring-[var(--marketing-orange)]"
-                                    placeholder="Votre commentaire..."
-                                    value={reviewForm.text}
-                                    onChange={e => setReviewForm({ ...reviewForm, text: e.target.value })}
-                                />
-                                <Button size="sm" className="w-full justify-center" disabled={isSubmitting}>
-                                    {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : "Envoyer l'avis"}
-                                </Button>
-                            </form>
+                            {!isOwnProfile ? (
+                                <>
+                                    <h4 className="font-bold text-sm mb-3 text-gray-700">Laisser un avis</h4>
+                                    <form onSubmit={handleReviewSubmit} className="space-y-4">
+                                        <div className="flex justify-center gap-2 mb-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    title={`Noter ${star} étoiles`}
+                                                    onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                                    className={`transition-all hover:scale-110 ${star <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-200'}`}
+                                                >
+                                                    <Star size={28} className={star <= reviewForm.rating ? "fill-current" : ""} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <textarea
+                                            required
+                                            rows={3}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]/20 focus:border-[var(--marketing-orange)] transition-all resize-none"
+                                            placeholder="Votre expérience avec cette personne..."
+                                            value={reviewForm.text}
+                                            onChange={e => setReviewForm({ ...reviewForm, text: e.target.value })}
+                                        />
+                                        <Button size="sm" className="w-full justify-center rounded-xl font-bold py-3" disabled={isSubmitting}>
+                                            {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : "Publier mon avis"}
+                                        </Button>
+                                    </form>
+                                </>
+                            ) : (
+                                <div className="p-4 bg-orange-50 rounded-lg text-sm text-[var(--marketing-orange)] text-center font-medium">
+                                    Ceci est votre profil.
+                                </div>
+                            )}
                         </div>
                     </div>
 

@@ -222,6 +222,8 @@ model Review {
   
   targetId    String
   target      User     @relation("ReceivedReviews", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([authorId, targetId])
 }
 
 model Message {
