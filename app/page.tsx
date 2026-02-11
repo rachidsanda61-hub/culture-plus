@@ -3,30 +3,24 @@
 import { Button } from "@/components/Button";
 import { EventCard } from "@/components/EventCard";
 import { EventCarousel } from "@/components/EventCarousel";
-import { HeroCarousel } from "@/components/HeroCarousel";
+import { CultureTicker } from "@/components/CultureTicker";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEvents } from "@/context/EventsContext";
 import { useEffect, useState } from "react";
-import { getHeroSlides } from "./actions/carousel";
 
 export default function Home() {
   const { events } = useEvents();
-  const [slides, setSlides] = useState<any[]>([]);
 
   // On prend les 4 premiers pour le carrousel (simulation "À la une")
   const featuredEvents = events.slice(0, 4);
 
-  useEffect(() => {
-    getHeroSlides().then(setSlides);
-  }, []);
-
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative pt-20 pb-32 overflow-hidden">
+      <section className="relative pt-20 pb-12 overflow-hidden">
         {/* Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-[80%] bg-[var(--marketing-orange)]/5 -z-10 rounded-b-[4rem]" />
+        <div className="absolute top-0 left-0 w-full h-[85%] bg-[var(--marketing-orange)]/5 -z-10 rounded-b-[4rem]" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm text-sm font-medium text-[var(--charcoal-600)] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -43,7 +37,7 @@ export default function Home() {
             Découvrez les meilleurs événements, trouvez des financements pour vos projets et connectez-vous avec les acteurs culturels du Niger.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300 mb-16">
+          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300 mb-12">
             <Link href="/events" className="w-full sm:w-auto">
               <Button size="lg" className="w-full">Explorer les événements</Button>
             </Link>
@@ -51,13 +45,11 @@ export default function Home() {
               <Button variant="outline" size="lg" className="w-full">Rejoindre le réseau</Button>
             </Link>
           </div>
+        </div>
 
-          {/* Hero Slider */}
-          {slides.length > 0 && (
-            <div className="w-full animate-in fade-in zoom-in-95 duration-1000 delay-500">
-              <HeroCarousel slides={slides} />
-            </div>
-          )}
+        {/* Culture Ticker - Dynamic Content Belt */}
+        <div className="w-full animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
+          <CultureTicker />
         </div>
       </section>
 

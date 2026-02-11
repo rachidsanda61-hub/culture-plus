@@ -31,8 +31,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             img.src = base64;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
-                const MAX_HEIGHT = 800;
+                const MAX_WIDTH = 500;
+                const MAX_HEIGHT = 500;
                 let width = img.width;
                 let height = img.height;
 
@@ -53,8 +53,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 const ctx = canvas.getContext('2d');
                 ctx?.drawImage(img, 0, 0, width, height);
 
-                // Compression à 0.7 de qualité pour réduire drastiquement le poids
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                // Compression à 0.6 de qualité pour réduire drastiquement le poids (max ~50-80ko)
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
                 resolve(compressedBase64);
             };
         });
