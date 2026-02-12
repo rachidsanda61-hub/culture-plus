@@ -12,9 +12,14 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { adminDeletePost, adminDeleteComment, adminDeleteReview } from '@/app/actions/admin';
 import { ProfileImageModal } from '@/components/ProfileImageModal';
 
+// Moved outside to avoid re-creation
 const formatDate = (date: Date | string) => {
+    if (!date) return 'Date inconnue';
     const d = new Date(date);
-    return isNaN(d.getTime()) ? 'Date inconnue' : d.toLocaleDateString('fr-FR', {
+    if (isNaN(d.getTime())) return 'Date inconnue';
+
+    // Use a fixed format or suppress hydration warning in the caller
+    return d.toLocaleDateString('fr-FR', {
         day: 'numeric',
         month: 'short',
         year: 'numeric'
@@ -33,14 +38,20 @@ export default function ProfileDetailPage() {
     const [activeTab, setActiveTab] = useState<'posts' | 'reviews'>('posts');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const isFollowProcessing = profile ? isProcessingFollow(profile.id) : false;
 
-    if (isLoading) {
+    // Critical: Avoid crashes on initial hydration mismatched data
+    if (!mounted || isLoading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500">
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500 bg-[var(--sand-50)]">
                 <Loader2 className="animate-spin text-[var(--marketing-orange)]" size={40} />
-                Chargement du profil...
+                <p className="animate-pulse">Chargement de l&apos;univers de l&apos;artiste...</p>
             </div>
         );
     }
@@ -122,9 +133,10 @@ export default function ProfileDetailPage() {
     };
 
     const CommentText = ({ text }: { text: string }) => {
+        if (!text) return null;
         const parts = text.split(/(@\w+)/g);
         return (
-            <p className="text-xs text-gray-700">
+            <div className="text-xs text-gray-700 leading-relaxed">
                 {parts.map((part, i) => (
                     part.startsWith('@') ? (
                         <span key={i} className="text-[var(--marketing-orange)] font-bold">{part}</span>
@@ -132,7 +144,7 @@ export default function ProfileDetailPage() {
                         <span key={i}>{part}</span>
                     )
                 ))}
-            </p>
+            </div>
         );
     };
 
@@ -215,11 +227,11 @@ export default function ProfileDetailPage() {
                                         <MapPin size={18} /> {profile.location}
                                     </div>
                                 )}
-                                <div className="flex items-center gap-1 font-bold">
-                                    <Star size={18} className="text-yellow-400 fill-yellow-400" /> {profile.rating}
+                                <div className="flex items-center gap-1 font-bold" title="Note moyenne">
+                                    <Star size={18} className="text-yellow-400 fill-yellow-400" /> {profile.rating || 0}
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <strong>{profile.followers}</strong> abonnés
+                                    <strong>{profile.followers || 0}</strong> abonnés
                                 </div>
                             </div>
                             {profile.bio && <p className="text-gray-600 max-w-2xl">{profile.bio}</p>}
@@ -240,7 +252,7 @@ export default function ProfileDetailPage() {
                         onClick={() => setActiveTab('reviews')}
                         className={`pb-3 px-6 font-medium text-sm transition-colors relative ${activeTab === 'reviews' ? 'text-[var(--marketing-orange)]' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                        Avis & Notes ({profile.reviews.length})
+                        Avis & Notes ({profile.reviews?.length || 0})
                         {activeTab === 'reviews' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--marketing-orange)]" />}
                     </button>
                 </div>
@@ -258,7 +270,9 @@ export default function ProfileDetailPage() {
                                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6">
                                         <div className="flex gap-4">
                                             <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                                                {profile.image ? <img src={profile.image} alt="" className="w-full h-full object-cover" /> : null}
+                                                {profile.image ? <img src={profile.image} alt="" className="w-full h-full object-cover" /> : (
+                                                    <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">{profile.name?.[0]?.toUpperCase() || '?'}</div>
+                                                )}
                                             </div>
                                             <div className="flex-1">
                                                 <form onSubmit={handlePostSubmit} className="space-y-3">
@@ -292,16 +306,17 @@ export default function ProfileDetailPage() {
                                 )}
 
                                 {/* Posts List */}
-                                {profile.posts.length === 0 && (
+                                {(!profile.posts || profile.posts.length === 0) && (
                                     <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400">
                                         Pas encore de publications.
                                     </div>
                                 )}
 
-                                {profile.posts.map((post) => {
+                                {profile.posts?.map((post) => {
                                     const isExpanded = expandedComments[post.id];
-                                    const visibleComments = isExpanded ? post.comments : post.comments.slice(0, 3);
-                                    const hasMoreComments = post.comments.length > 3;
+                                    const comments = post.comments || [];
+                                    const visibleComments = isExpanded ? comments : comments.slice(0, 3);
+                                    const hasMoreComments = comments.length > 3;
 
                                     return (
                                         <div key={post.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-6">
@@ -310,7 +325,7 @@ export default function ProfileDetailPage() {
                                                     {profile.image ? <img src={profile.image} alt="" className="w-full h-full object-cover" /> : null}
                                                 </div>
                                                 <div>
-                                                    <span className="block text-xs text-gray-400">{formatDate(post.createdAt)}</span>
+                                                    <span className="block text-xs text-gray-400" suppressHydrationWarning>{formatDate(post.createdAt)}</span>
                                                 </div>
                                                 {isAdmin && (
                                                     <button
@@ -349,7 +364,7 @@ export default function ProfileDetailPage() {
                                                 </button>
                                                 <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
                                                     <MessageSquare size={20} />
-                                                    {post.comments.length}
+                                                    {post.comments?.length || 0}
                                                 </div>
                                             </div>
 
@@ -389,7 +404,7 @@ export default function ProfileDetailPage() {
                                                                         )}
                                                                     </div>
                                                                     <div className="flex items-center gap-4 mt-1 ml-1">
-                                                                        <span className="text-[10px] text-gray-400">{formatDate(comment.createdAt)}</span>
+                                                                        <span className="text-[10px] text-gray-400" suppressHydrationWarning>{formatDate(comment.createdAt)}</span>
                                                                         {user && (
                                                                             <button
                                                                                 onClick={() => {
@@ -424,7 +439,7 @@ export default function ProfileDetailPage() {
                                                                                     </Link>
                                                                                     <CommentText text={reply.text} />
                                                                                 </div>
-                                                                                <span className="text-[10px] text-gray-400 ml-1 mt-0.5 block">{formatDate(reply.createdAt)}</span>
+                                                                                <span className="text-[10px] text-gray-400 ml-1 mt-0.5 block" suppressHydrationWarning>{formatDate(reply.createdAt)}</span>
                                                                             </div>
                                                                         </div>
                                                                     ))}
@@ -501,18 +516,18 @@ export default function ProfileDetailPage() {
                                     </div>
                                     <div className="text-right">
                                         <div className="flex items-center gap-2 justify-end mb-1">
-                                            <span className="text-3xl font-bold text-[var(--charcoal-900)]">{profile.rating}</span>
+                                            <span className="text-3xl font-bold text-[var(--charcoal-900)]">{profile.rating || 0}</span>
                                             <div className="flex text-yellow-400">
                                                 {[...Array(5)].map((_, i) => (
-                                                    <Star key={i} size={20} className={i < Math.round(profile.rating) ? "fill-current" : "text-gray-200"} />
+                                                    <Star key={i} size={20} className={i < Math.round(profile.rating || 0) ? "fill-current" : "text-gray-200"} />
                                                 ))}
                                             </div>
                                         </div>
-                                        <p className="text-gray-400 text-sm">{profile.reviews.length} avis</p>
+                                        <p className="text-gray-400 text-sm">{profile.reviews?.length || 0} avis</p>
                                     </div>
                                 </div>
 
-                                {profile.reviews.length === 0 && (
+                                {(!profile.reviews || profile.reviews.length === 0) && (
                                     <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400">
                                         <Star size={48} className="mx-auto mb-4 opacity-20" />
                                         <p>Aucun avis pour le moment.</p>
@@ -520,22 +535,22 @@ export default function ProfileDetailPage() {
                                     </div>
                                 )}
 
-                                {profile.reviews.map((review) => {
-                                    const canDelete = (user?.id === review.author.id) || isAdmin;
+                                {profile.reviews?.map((review) => {
+                                    const canDelete = (user?.id === review.author?.id) || isAdmin;
                                     return (
                                         <div key={review.id} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-3">
-                                                    <Link href={`/network/${review.author.id}`} className="block w-10 h-10 rounded-full bg-gray-200 overflow-hidden hover:opacity-80 transition-opacity">
-                                                        {review.author.image ? <img src={review.author.image} alt="" className="w-full h-full object-cover" /> : (
-                                                            <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">{review.author.name?.[0]?.toUpperCase() || '?'}</div>
+                                                    <Link href={`/network/${review.author?.id}`} className="block w-10 h-10 rounded-full bg-gray-200 overflow-hidden hover:opacity-80 transition-opacity">
+                                                        {review.author?.image ? <img src={review.author.image} alt="" className="w-full h-full object-cover" /> : (
+                                                            <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">{review.author?.name?.[0]?.toUpperCase() || '?'}</div>
                                                         )}
                                                     </Link>
                                                     <div>
-                                                        <Link href={`/network/${review.author.id}`} className="font-bold text-gray-900 hover:underline block">
-                                                            {review.author.name || 'Utilisateur inconnu'}
+                                                        <Link href={`/network/${review.author?.id}`} className="font-bold text-gray-900 hover:underline block">
+                                                            {review.author?.name || 'Utilisateur inconnu'}
                                                         </Link>
-                                                        <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
+                                                        <span className="text-xs text-gray-400" suppressHydrationWarning>{formatDate(review.createdAt)}</span>
                                                     </div>
                                                 </div>
                                                 {canDelete && (
