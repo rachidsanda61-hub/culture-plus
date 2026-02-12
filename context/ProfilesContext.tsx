@@ -11,13 +11,13 @@ export interface Review {
     author: { id: string; name: string; image?: string | null };
     rating: number;
     text: string;
-    createdAt: Date;
+    createdAt: string | Date;
 }
 
 export interface Comment {
     id: string;
     text: string;
-    createdAt: Date;
+    createdAt: string | Date;
     author: { id: string, name: string; image?: string | null };
     parentId?: string | null;
     replies?: Comment[];
@@ -28,7 +28,7 @@ export interface Post {
     authorId: string;
     content: string;
     image?: string | null;
-    createdAt: Date;
+    createdAt: string | Date;
     likes: number;
     isLiked?: boolean;
     comments: Comment[];

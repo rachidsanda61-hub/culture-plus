@@ -41,14 +41,57 @@ export async function getProfiles(currentUserId?: string) {
             }
         });
 
-        // Enrich with isFollowed and derived followers count
-        return profiles.map((profile: any) => ({
-            ...profile,
-            followers: profile.followedBy.length,
-            isFollowed: currentUserId ? profile.followedBy.some((f: any) => f.followerId === currentUserId) : false,
-            posts: profile.posts.map((post: any) => ({
-                ...post,
-                isLiked: currentUserId ? post.likes_list.some((l: any) => l.userId === currentUserId) : false
+        // Explicitly map to clean objects to avoid serialization issues with deep Prisma objects
+        return profiles.map((p: any) => ({
+            id: p.id,
+            name: p.name || 'Utilisateur',
+            email: p.email,
+            role: p.role,
+            location: p.location,
+            image: p.image,
+            tags: p.tags || [],
+            bio: p.bio,
+            rating: p.rating || 0,
+            followers: p.followedBy?.length || 0,
+            isFollowed: currentUserId ? p.followedBy?.some((f: any) => f.followerId === currentUserId) : false,
+            reviews: (p.reviews || []).map((r: any) => ({
+                id: r.id,
+                rating: r.rating,
+                text: r.text,
+                createdAt: r.createdAt.toISOString(),
+                author: {
+                    id: r.author?.id,
+                    name: r.author?.name || 'Utilisateur',
+                    image: r.author?.image
+                }
+            })),
+            posts: (p.posts || []).map((post: any) => ({
+                id: post.id,
+                content: post.content,
+                image: post.image,
+                likes: post.likes || 0,
+                createdAt: post.createdAt.toISOString(),
+                isLiked: currentUserId ? post.likes_list?.some((l: any) => l.userId === currentUserId) : false,
+                comments: (post.comments || []).map((c: any) => ({
+                    id: c.id,
+                    text: c.text,
+                    createdAt: c.createdAt.toISOString(),
+                    author: {
+                        id: c.author?.id,
+                        name: c.author?.name || 'Utilisateur',
+                        image: c.author?.image
+                    },
+                    replies: (c.replies || []).map((rep: any) => ({
+                        id: rep.id,
+                        text: rep.text,
+                        createdAt: rep.createdAt.toISOString(),
+                        author: {
+                            id: rep.author?.id,
+                            name: rep.author?.name || 'Utilisateur',
+                            image: rep.author?.image
+                        }
+                    }))
+                }))
             }))
         }));
     } catch (error) {
@@ -89,21 +132,95 @@ export async function updateRole(userId: string, newRole: string) {
     }
 }
 
-export async function getProfileById(id: string) {
+export async function getProfileById(id: string, currentUserId?: string) {
     try {
-        return await prisma.user.findUnique({
+        const p = await prisma.user.findUnique({
             where: { id },
             include: {
                 posts: {
+                    include: {
+                        comments: {
+                            where: { parentId: null },
+                            include: {
+                                author: true,
+                                replies: {
+                                    include: {
+                                        author: true
+                                    },
+                                    orderBy: { createdAt: 'asc' }
+                                }
+                            },
+                            orderBy: { createdAt: 'asc' }
+                        },
+                        likes_list: true
+                    },
                     orderBy: { createdAt: 'desc' }
                 },
                 reviews: {
                     include: {
                         author: true
                     }
-                }
+                },
+                following: true,
+                followedBy: true
             }
         });
+
+        if (!p) return null;
+
+        // Map to clean object
+        return {
+            id: p.id,
+            name: p.name || 'Utilisateur',
+            email: p.email,
+            role: p.role,
+            location: p.location,
+            image: p.image,
+            tags: p.tags || [],
+            bio: p.bio,
+            rating: p.rating || 0,
+            followers: p.followedBy?.length || 0,
+            isFollowed: currentUserId ? p.followedBy?.some((f: any) => f.followerId === currentUserId) : false,
+            reviews: (p.reviews || []).map((r: any) => ({
+                id: r.id,
+                rating: r.rating,
+                text: r.text,
+                createdAt: r.createdAt.toISOString(),
+                author: {
+                    id: r.author?.id,
+                    name: r.author?.name || 'Utilisateur',
+                    image: r.author?.image
+                }
+            })),
+            posts: (p.posts || []).map((post: any) => ({
+                id: post.id,
+                content: post.content,
+                image: post.image,
+                likes: post.likes || 0,
+                createdAt: post.createdAt.toISOString(),
+                isLiked: currentUserId ? post.likes_list?.some((l: any) => l.userId === currentUserId) : false,
+                comments: (post.comments || []).map((c: any) => ({
+                    id: c.id,
+                    text: c.text,
+                    createdAt: c.createdAt.toISOString(),
+                    author: {
+                        id: c.author?.id,
+                        name: c.author?.name || 'Utilisateur',
+                        image: c.author?.image
+                    },
+                    replies: (c.replies || []).map((rep: any) => ({
+                        id: rep.id,
+                        text: rep.text,
+                        createdAt: rep.createdAt.toISOString(),
+                        author: {
+                            id: rep.author?.id,
+                            name: rep.author?.name || 'Utilisateur',
+                            image: rep.author?.image
+                        }
+                    }))
+                }))
+            }))
+        };
     } catch (error) {
         console.error('Failed to get profile:', error);
         return null;
