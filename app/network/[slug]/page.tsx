@@ -164,7 +164,7 @@ export default function ProfileDetailPage() {
                                     <img src={profile.image} alt={profile.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-gray-300 flex items-center justify-center text-4xl text-white font-bold">
-                                        {profile.name[0]}
+                                        {profile.name?.[0]?.toUpperCase() || '?'}
                                     </div>
                                 )}
                                 {isOwnProfile && (
@@ -265,7 +265,7 @@ export default function ProfileDetailPage() {
                                                     <textarea
                                                         value={postForm.content}
                                                         onChange={e => setPostForm({ ...postForm, content: e.target.value })}
-                                                        placeholder={`Quoi de neuf aujourd'hui, ${profile.name.split(' ')[0]} ?`}
+                                                        placeholder={`Quoi de neuf aujourd'hui, ${profile.name?.split(' ')[0] || ''} ?`}
                                                         className="w-full bg-gray-50 border-0 rounded-lg p-3 focus:ring-2 focus:ring-[var(--marketing-orange)] resize-none"
                                                         rows={2}
                                                     />
@@ -363,14 +363,14 @@ export default function ProfileDetailPage() {
                                                                 <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
                                                                     {comment.author.image ? <img src={comment.author.image} alt="" className="w-full h-full object-cover" /> : (
                                                                         <div className="w-full h-full bg-gray-300 flex items-center justify-center text-xs font-bold text-white">
-                                                                            {comment.author.name[0]}
+                                                                            {comment.author.name?.[0]?.toUpperCase() || '?'}
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                                 <div className="flex-1">
                                                                     <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm relative">
                                                                         <Link href={`/network/${comment.author.id}`} className="text-xs font-bold text-gray-900 mb-1 hover:underline block">
-                                                                            {comment.author.name}
+                                                                            {comment.author.name || 'Utilisateur inconnu'}
                                                                         </Link>
                                                                         <CommentText text={comment.text} />
                                                                         {isAdmin && (
@@ -394,7 +394,7 @@ export default function ProfileDetailPage() {
                                                                             <button
                                                                                 onClick={() => {
                                                                                     setReplyingTo(replyingTo === comment.id ? null : comment.id);
-                                                                                    setReplyText(`@${comment.author.name.split(' ')[0]} `);
+                                                                                    setReplyText(`@${comment.author.name?.split(' ')[0] || 'Utilisateur'} `);
                                                                                 }}
                                                                                 className="text-[10px] font-semibold text-gray-500 hover:text-[var(--marketing-orange)]"
                                                                             >
@@ -413,14 +413,14 @@ export default function ProfileDetailPage() {
                                                                             <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
                                                                                 {reply.author.image ? <img src={reply.author.image} alt="" className="w-full h-full object-cover" /> : (
                                                                                     <div className="w-full h-full bg-gray-300 flex items-center justify-center text-[10px] font-bold text-white">
-                                                                                        {reply.author.name[0]}
+                                                                                        {reply.author.name?.[0]?.toUpperCase() || '?'}
                                                                                     </div>
                                                                                 )}
                                                                             </div>
                                                                             <div className="flex-1">
                                                                                 <div className="bg-white p-2 rounded-xl rounded-tl-none border border-gray-100 shadow-sm">
                                                                                     <Link href={`/network/${reply.author.id}`} className="text-[10px] font-bold text-gray-900 mb-0.5 hover:underline block">
-                                                                                        {reply.author.name}
+                                                                                        {reply.author.name || 'Utilisateur inconnu'}
                                                                                     </Link>
                                                                                     <CommentText text={reply.text} />
                                                                                 </div>
@@ -436,7 +436,7 @@ export default function ProfileDetailPage() {
                                                                 <div className="pl-11 mt-2 flex gap-2">
                                                                     <input
                                                                         type="text"
-                                                                        placeholder={`Répondre à ${comment.author.name.split(' ')[0]}...`}
+                                                                        placeholder={`Répondre à ${comment.author.name?.split(' ')[0] || '...'}...`}
                                                                         value={replyText}
                                                                         onChange={e => setReplyText(e.target.value)}
                                                                         className="flex-1 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-[var(--marketing-orange)]"
@@ -528,12 +528,12 @@ export default function ProfileDetailPage() {
                                                 <div className="flex items-center gap-3">
                                                     <Link href={`/network/${review.author.id}`} className="block w-10 h-10 rounded-full bg-gray-200 overflow-hidden hover:opacity-80 transition-opacity">
                                                         {review.author.image ? <img src={review.author.image} alt="" className="w-full h-full object-cover" /> : (
-                                                            <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">{review.author.name[0]}</div>
+                                                            <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">{review.author.name?.[0]?.toUpperCase() || '?'}</div>
                                                         )}
                                                     </Link>
                                                     <div>
                                                         <Link href={`/network/${review.author.id}`} className="font-bold text-gray-900 hover:underline block">
-                                                            {review.author.name}
+                                                            {review.author.name || 'Utilisateur inconnu'}
                                                         </Link>
                                                         <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
                                                     </div>
