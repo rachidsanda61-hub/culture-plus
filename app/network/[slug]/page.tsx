@@ -31,6 +31,7 @@ export default function ProfileDetailPage() {
     const { getProfileById, followProfile, addReview, deleteReview, addPost, addComment, likePost, isLoading, isProcessingFollow, updateProfile } = useProfiles();
     const { user } = useAuth();
 
+    // All hooks must be called before any conditional returns
     const [mounted, setMounted] = useState(false);
     const [reviewForm, setReviewForm] = useState({ rating: 5, text: '' });
     const [postForm, setPostForm] = useState({ content: '', image: '' });
@@ -38,16 +39,19 @@ export default function ProfileDetailPage() {
     const [activeTab, setActiveTab] = useState<'posts' | 'reviews'>('posts');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyText, setReplyText] = useState('');
+    const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // Get profile from context
+    // Get profile from context - MUST be called before any conditional returns
     const profile = getProfileById(slug as string);
     const isFollowProcessing = profile ? isProcessingFollow(profile.id) : false;
 
-    // Critical: Avoid crashes on initial hydration mismatched data
+    // NOW we can do conditional returns
     if (!mounted || isLoading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500 bg-[var(--sand-50)]">
@@ -109,14 +113,6 @@ export default function ProfileDetailPage() {
         }
     };
 
-    const [replyingTo, setReplyingTo] = useState<string | null>(null);
-    const [replyText, setReplyText] = useState('');
-    const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
-
-    const toggleComments = (postId: string) => {
-        setExpandedComments(prev => ({ ...prev, [postId]: !prev[postId] }));
-    };
-
     const handleReplySubmit = async (postId: string, commentId: string) => {
         if (!replyText || !replyText.trim()) return;
 
@@ -127,6 +123,10 @@ export default function ProfileDetailPage() {
         } catch (error) {
             console.error(error);
         }
+    };
+
+    const toggleComments = (postId: string) => {
+        setExpandedComments(prev => ({ ...prev, [postId]: !prev[postId] }));
     };
 
     const handleImageUpdate = async (base64: string) => {
