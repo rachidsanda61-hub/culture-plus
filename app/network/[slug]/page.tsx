@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useProfiles } from '@/context/ProfilesContext';
 import { useAuth } from '@/context/AuthContext';
@@ -11,6 +11,8 @@ import { ShareButton } from '@/components/ShareButton';
 import { ImageUpload } from '@/components/ImageUpload';
 import { adminDeletePost, adminDeleteComment, adminDeleteReview } from '@/app/actions/admin';
 import { ProfileImageModal } from '@/components/ProfileImageModal';
+import { getProfileById as getProfileByIdAction } from '@/app/actions/profiles';
+import type { Profile } from '@/context/ProfilesContext';
 
 // Moved outside to avoid re-creation
 const formatDate = (date: Date | string) => {
@@ -28,10 +30,11 @@ const formatDate = (date: Date | string) => {
 
 export default function ProfileDetailPage() {
     const { slug } = useParams();
-    const { getProfileById, followProfile, addReview, deleteReview, addPost, addComment, likePost, isLoading, isProcessingFollow, updateProfile } = useProfiles();
+    const { followProfile, addReview, deleteReview, addPost, addComment, likePost, isProcessingFollow, updateProfile } = useProfiles();
     const { user } = useAuth();
-    const profile = getProfileById(slug as string);
 
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [reviewForm, setReviewForm] = useState({ rating: 5, text: '' });
     const [postForm, setPostForm] = useState({ content: '', image: '' });
     const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
@@ -40,9 +43,24 @@ export default function ProfileDetailPage() {
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
 
-    React.useEffect(() => {
-        setMounted(true);
-    }, []);
+    // Load profile data from server
+    useEffect(() => {
+        const loadProfile = async () => {
+            if (!slug) return;
+            try {
+                setIsLoading(true);
+                const data = await getProfileByIdAction(slug as string, user?.id);
+                setProfile(data as any);
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+                setProfile(null);
+            } finally {
+                setIsLoading(false);
+                setMounted(true);
+            }
+        };
+        loadProfile();
+    }, [slug, user?.id]);
 
     const isFollowProcessing = profile ? isProcessingFollow(profile.id) : false;
 
@@ -70,6 +88,17 @@ export default function ProfileDetailPage() {
     const isOwnProfile = user?.id === profile.id;
     const isAdmin = (user as any)?.appRole === 'ADMIN';
 
+    // Reload profile data after actions
+    const reloadProfile = async () => {
+        if (!slug) return;
+        try {
+            const data = await getProfileByIdAction(slug as string, user?.id);
+            setProfile(data as any);
+        } catch (error) {
+            console.error('Failed to reload profile:', error);
+        }
+    };
+
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -79,6 +108,7 @@ export default function ProfileDetailPage() {
                 text: reviewForm.text
             });
             setReviewForm({ rating: 5, text: '' });
+            await reloadProfile();
         } finally {
             setIsSubmitting(false);
         }
@@ -91,6 +121,7 @@ export default function ProfileDetailPage() {
         try {
             await addPost(postForm.content, postForm.image);
             setPostForm({ content: '', image: '' });
+            await reloadProfile();
         } finally {
             setIsSubmitting(false);
         }
@@ -103,6 +134,7 @@ export default function ProfileDetailPage() {
         try {
             await addComment(postId, text);
             setCommentTexts(prev => ({ ...prev, [postId]: '' }));
+            await reloadProfile();
         } catch (error) {
             console.error(error);
         }
@@ -123,13 +155,19 @@ export default function ProfileDetailPage() {
             await addComment(postId, replyText, commentId);
             setReplyText('');
             setReplyingTo(null);
+            await reloadProfile();
         } catch (error) {
             console.error(error);
         }
     };
 
     const handleImageUpdate = async (base64: string) => {
-        await updateProfile({ image: base64 });
+        try {
+            await updateProfile({ image: base64 });
+            await reloadProfile();
+        } catch (error) {
+            console.error('Failed to update image:', error);
+        }
     };
 
     const CommentText = ({ text }: { text: string }) => {
