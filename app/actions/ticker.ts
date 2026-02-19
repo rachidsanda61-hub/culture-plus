@@ -6,6 +6,7 @@ export interface TickerItem {
     id: string;
     type: 'event' | 'opportunity';
     title: string;
+    description: string | null;
     category: string;
     image: string | null;
     slug?: string; // for events
@@ -21,6 +22,7 @@ export async function getTickerItems(): Promise<TickerItem[]> {
                 select: {
                     id: true,
                     title: true,
+                    description: true,
                     category: true,
                     image: true,
                     slug: true,
@@ -33,6 +35,7 @@ export async function getTickerItems(): Promise<TickerItem[]> {
                 select: {
                     id: true,
                     title: true,
+                    description: true,
                     category: true,
                     image: true,
                     createdAt: true,
@@ -46,6 +49,7 @@ export async function getTickerItems(): Promise<TickerItem[]> {
                 id: e.id,
                 type: 'event' as const,
                 title: e.title,
+                description: e.description,
                 category: e.category,
                 image: e.image,
                 slug: e.slug,
@@ -55,6 +59,7 @@ export async function getTickerItems(): Promise<TickerItem[]> {
                 id: o.id,
                 type: 'opportunity' as const,
                 title: o.title,
+                description: o.description,
                 category: o.category,
                 image: o.image,
                 createdAt: o.createdAt

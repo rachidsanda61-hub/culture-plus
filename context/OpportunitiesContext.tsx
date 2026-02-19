@@ -25,16 +25,28 @@ export interface Opportunity {
 
 interface OpportunitiesContextType {
     opportunities: Opportunity[];
+    filteredOpportunities: Opportunity[];
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    categoryFilter: string;
+    setCategoryFilter: (category: string) => void;
+    locationFilter: string;
+    setLocationFilter: (location: string) => void;
     addOpportunity: (opp: OpportunityInput) => Promise<void>;
     editOpportunity: (id: string, data: Partial<OpportunityInput>) => Promise<void>;
     deleteOpportunity: (id: string) => Promise<void>;
     isLoading: boolean;
+    categories: string[];
+    locations: string[];
 }
 
 const OpportunitiesContext = createContext<OpportunitiesContextType | undefined>(undefined);
 
 export const OpportunitiesProvider = ({ children }: { children: React.ReactNode }) => {
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('ALL');
+    const [locationFilter, setLocationFilter] = useState('ALL');
     const [isLoading, setIsLoading] = useState(true);
     const { user } = useAuth();
 
@@ -52,6 +64,24 @@ export const OpportunitiesProvider = ({ children }: { children: React.ReactNode 
     useEffect(() => {
         loadOpportunities();
     }, []);
+
+    const categories = Array.from(new Set(opportunities.map(o => o.category)));
+    const locations = Array.from(new Set(opportunities.filter(o => o.location).map(o => o.location!)));
+
+    const filteredOpportunities = opportunities.filter(opp => {
+        const q = searchQuery.toLowerCase();
+        const matchesSearch = !searchQuery || (
+            opp.title.toLowerCase().includes(q) ||
+            opp.description?.toLowerCase().includes(q) ||
+            opp.location?.toLowerCase().includes(q) ||
+            opp.category.toLowerCase().includes(q)
+        );
+
+        const matchesCategory = categoryFilter === 'ALL' || opp.category === categoryFilter;
+        const matchesLocation = locationFilter === 'ALL' || opp.location === locationFilter;
+
+        return matchesSearch && matchesCategory && matchesLocation;
+    });
 
     const addOpportunity = async (opp: OpportunityInput) => {
         if (!user) {
@@ -94,7 +124,22 @@ export const OpportunitiesProvider = ({ children }: { children: React.ReactNode 
     };
 
     return (
-        <OpportunitiesContext.Provider value={{ opportunities, addOpportunity, editOpportunity, deleteOpportunity, isLoading }}>
+        <OpportunitiesContext.Provider value={{
+            opportunities,
+            filteredOpportunities,
+            searchQuery,
+            setSearchQuery,
+            categoryFilter,
+            setCategoryFilter,
+            locationFilter,
+            setLocationFilter,
+            addOpportunity,
+            editOpportunity,
+            deleteOpportunity,
+            isLoading,
+            categories,
+            locations
+        }}>
             {children}
         </OpportunitiesContext.Provider>
     );
@@ -105,10 +150,19 @@ export const useOpportunities = () => {
     if (!context) {
         return {
             opportunities: [],
+            filteredOpportunities: [],
+            searchQuery: '',
+            setSearchQuery: () => { },
+            categoryFilter: 'ALL',
+            setCategoryFilter: () => { },
+            locationFilter: 'ALL',
+            setLocationFilter: () => { },
             addOpportunity: async () => { },
             editOpportunity: async () => { },
             deleteOpportunity: async () => { },
-            isLoading: true
+            isLoading: true,
+            categories: [],
+            locations: []
         };
     }
     return context;

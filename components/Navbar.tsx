@@ -11,21 +11,13 @@ import { useMessages } from '@/context/MessagesContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useAuth } from '@/context/AuthContext';
 import { UserMenu } from './UserMenu';
+import { GlobalSearch } from './GlobalSearch';
 
 export const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [showSearch, setShowSearch] = useState(false);
     const { unreadCount: messageCount } = useMessages();
     const { user, logout } = useAuth();
-    const { searchQuery, setSearchQuery } = useProfiles();
     const router = useRouter();
-
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value);
-        if (window.location.pathname !== '/network') {
-            router.push('/network');
-        }
-    };
 
     return (
         <nav className="fixed top-0 w-full z-50 glass-panel border-b border-white/20">
@@ -52,26 +44,10 @@ export const Navbar = () => {
                     </div>
 
                     {/* Desktop Actions */}
-                    <div className="hidden md:flex items-center gap-4">
-                        <div className={`relative flex items-center transition-all duration-300 ${showSearch ? 'w-64' : 'w-10'}`}>
-                            <button
-                                title="Rechercher"
-                                onClick={() => setShowSearch(!showSearch)}
-                                className={`p-2 rounded-full hover:bg-[var(--sand-100)] transition-colors ${showSearch ? 'text-[var(--marketing-orange)]' : 'text-[var(--charcoal-600)]'}`}
-                            >
-                                <Search size={20} />
-                            </button>
-                            <input
-                                type="text"
-                                placeholder="Rechercher..."
-                                value={searchQuery}
-                                onChange={handleSearchChange}
-                                className={`absolute left-10 w-full bg-white border-b border-gray-200 focus:border-[var(--marketing-orange)] outline-none text-sm transition-all duration-300 ${showSearch ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
-                                onBlur={() => !searchQuery && setShowSearch(false)}
-                            />
-                        </div>
+                    <div className="hidden md:flex items-center gap-4 flex-1 justify-end">
+                        <GlobalSearch />
 
-                        <Link href="/messages" className="relative text-[var(--charcoal-600)] hover:text-[var(--marketing-orange)]">
+                        <Link href="/messages" className="relative text-[var(--charcoal-600)] hover:text-[var(--marketing-orange)] ml-4">
                             <Mail size={20} />
                             {messageCount > 0 && (
                                 <span className="absolute -top-1.5 -right-1.5 bg-[var(--marketing-orange)] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] flex items-center justify-center border border-white">
@@ -141,16 +117,7 @@ export const Navbar = () => {
                         </Link>
 
                         <div className="px-3 py-2">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Rechercher un profil..."
-                                    value={searchQuery}
-                                    onChange={handleSearchChange}
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-full pl-10 pr-4 py-2 text-sm outline-none focus:ring-1 focus:ring-[var(--marketing-orange)]"
-                                />
-                            </div>
+                            <GlobalSearch />
                         </div>
 
 

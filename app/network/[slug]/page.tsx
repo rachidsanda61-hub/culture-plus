@@ -333,64 +333,143 @@ export default function ProfileDetailPage() {
                     </div>
                 </div>
 
-                {/* Tabs Navigation */}
-                <div className="flex border-b border-gray-200 mb-6 sticky top-16 bg-[var(--sand-50)] z-10 pt-2">
-                    <button
-                        onClick={() => setActiveTab('posts')}
-                        className={`pb-3 px-6 font-medium text-sm transition-colors relative ${activeTab === 'posts' ? 'text-[var(--marketing-orange)]' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        Fil d&apos;actualité
-                        {activeTab === 'posts' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--marketing-orange)]" />}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('reviews')}
-                        className={`pb-3 px-6 font-medium text-sm transition-colors relative ${activeTab === 'reviews' ? 'text-[var(--marketing-orange)]' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        Avis & Notes ({profile.reviews?.length || 0})
-                        {activeTab === 'reviews' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--marketing-orange)]" />}
-                    </button>
-                </div>
+                {/* Multi-Column Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                {/* Content Area */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Sidebar Info */}
+                    <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+                        <div className="bg-white rounded-3xl p-6 shadow-xl shadow-gray-200/50 border border-gray-100">
+                            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 px-1">Coordonnées & Infos</h3>
 
-                    {/* Main Column (Feed or Reviews) */}
-                    <div className="lg:col-span-2 space-y-6">
+                            <div className="space-y-5">
+                                <Link href={`/messages?with=${profile.id}`} className="block">
+                                    <Button className="w-full py-6 rounded-2xl text-lg font-black shadow-lg shadow-[var(--marketing-orange)]/20 gap-3 group">
+                                        <MessageSquare className="group-hover:scale-110 transition-transform" /> Contacter
+                                    </Button>
+                                </Link>
 
-                        {activeTab === 'posts' ? (
-                            <>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {!isOwnProfile && (
+                                        <Button
+                                            onClick={() => followProfile(profile.id)}
+                                            disabled={isFollowProcessing}
+                                            variant={profile.isFollowed ? "outline" : "primary"}
+                                            className={`rounded-xl px-4 py-3 h-auto text-sm font-bold border-gray-200 ${profile.isFollowed ? "text-green-600 bg-green-50 border-green-200" : ""}`}
+                                        >
+                                            {isFollowProcessing ? <Loader2 className="animate-spin" size={16} /> : (profile.isFollowed ? "Abonné" : "Suivre")}
+                                        </Button>
+                                    )}
+                                    <ShareButton
+                                        url={`/network/${profile.id}`}
+                                        title={`Découvrez ${profile.name} sur Culture+`}
+                                        text={`Regarde ce profil de ${profile.role} :`}
+                                        variant="outline"
+                                        className="rounded-xl px-4 py-3 h-auto text-sm font-bold border-gray-200"
+                                    />
+                                </div>
+
+                                <div className="pt-4 space-y-4 border-t border-gray-50">
+                                    {(profile.country || profile.city) && (
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <MapIcon size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Localisation</p>
+                                                <p className="text-sm font-bold text-gray-900">{profile.city}{profile.city && profile.country ? ', ' : ''}{profile.country}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {profile.official_website && (
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <Globe size={18} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Site Web</p>
+                                                <a href={profile.official_website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[var(--marketing-orange)] truncate block hover:underline">
+                                                    {profile.official_website.replace(/^https?:\/\//, '')}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stats Card */}
+                        <div className="bg-gray-900 rounded-3xl p-6 text-white shadow-xl overflow-hidden relative group">
+                            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-[var(--marketing-orange)] rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 relative z-10">Statistiques</h3>
+                            <div className="grid grid-cols-2 gap-6 relative z-10">
+                                <div>
+                                    <p className="text-3xl font-black">{profile.followers || 0}</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Abonnés</p>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-1.5 ">
+                                        <p className="text-3xl font-black">{profile.rating || 0}</p>
+                                        <Star size={20} className="text-yellow-400 fill-yellow-400 mb-1" />
+                                    </div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Note Moyenne</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Main Content */}
+                    <div className="lg:col-span-8 space-y-8">
+
+                        {/* Feed / About */}
+                        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                            <h3 className="text-xl font-black text-gray-900 mb-4 px-1 flex items-center gap-2">
+                                <Building className="text-[var(--marketing-orange)]" size={24} />
+                                Présentation
+                            </h3>
+                            <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-wrap">
+                                {profile.bio || "Aucune description fournie pour le moment."}
+                            </p>
+                        </div>
+
+                        {/* Latest Activities (Posts) */}
+                        <section>
+                            <div className="flex items-center justify-between mb-6 px-1">
+                                <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                                    <ImageIcon className="text-[var(--marketing-orange)]" size={24} />
+                                    Actualités & Publications
+                                </h3>
+                            </div>
+
+                            <div className="space-y-6">
                                 {/* New Post Form - Only for owner */}
                                 {isOwnProfile && (
-                                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6">
+                                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm border-l-4 border-l-[var(--marketing-orange)]">
                                         <div className="flex gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                                            <div className="w-12 h-12 rounded-2xl bg-gray-100 overflow-hidden flex-shrink-0 shadow-inner">
                                                 {profile.image ? <img src={profile.image} alt="" className="w-full h-full object-cover" /> : (
                                                     <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">{profile.name?.[0]?.toUpperCase() || '?'}</div>
                                                 )}
                                             </div>
                                             <div className="flex-1">
-                                                <form onSubmit={handlePostSubmit} className="space-y-3">
+                                                <form onSubmit={handlePostSubmit} className="space-y-4">
                                                     <textarea
                                                         value={postForm.content}
                                                         onChange={e => setPostForm({ ...postForm, content: e.target.value })}
-                                                        placeholder={`Quoi de neuf aujourd'hui, ${profile.name?.split(' ')[0] || ''} ?`}
-                                                        className="w-full bg-gray-50 border-0 rounded-lg p-3 focus:ring-2 focus:ring-[var(--marketing-orange)] resize-none"
-                                                        rows={2}
+                                                        placeholder={`Partagez vos actualités avec la communauté...`}
+                                                        className="w-full bg-gray-50 border-gray-100 rounded-2xl p-4 focus:ring-2 focus:ring-[var(--marketing-orange)]/20 transition-all outline-none resize-none text-gray-700 min-h-[100px]"
                                                     />
 
-                                                    <div className="py-2">
+                                                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                                                         <ImageUpload
-                                                            label="Ajouter une image à votre publication (Optionnel)"
+                                                            label="Illustration"
                                                             value={postForm.image}
                                                             onChange={(base64) => setPostForm({ ...postForm, image: base64 })}
                                                             onRemove={() => setPostForm({ ...postForm, image: '' })}
                                                             aspectRatio="video"
                                                         />
-                                                    </div>
-
-                                                    <div className="flex justify-end">
-                                                        <Button size="sm" disabled={!postForm.content.trim() || isSubmitting}>
-                                                            {isSubmitting ? <Loader2 className="animate-spin" size={14} /> : <>Publier <Send size={14} className="ml-1" /></>}
+                                                        <Button size="lg" disabled={!postForm.content.trim() || isSubmitting} className="rounded-2xl px-10 font-black shadow-lg shadow-[var(--marketing-orange)]/10">
+                                                            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : "Publier"}
                                                         </Button>
                                                     </div>
                                                 </form>
@@ -399,329 +478,234 @@ export default function ProfileDetailPage() {
                                     </div>
                                 )}
 
-                                {/* Posts List */}
-                                {(!profile.posts || profile.posts.length === 0) && (
-                                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400">
-                                        Pas encore de publications.
-                                    </div>
-                                )}
-
-                                {profile.posts?.map((post) => {
+                                {profile.posts?.map((post, idx) => {
                                     const isExpanded = expandedComments[post.id];
                                     const comments = post.comments || [];
                                     const visibleComments = isExpanded ? comments : comments.slice(0, 3);
-                                    const hasMoreComments = comments.length > 3;
 
                                     return (
-                                        <div key={post.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-                                            <div className="p-4 flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                                                    {profile.image ? <img src={profile.image} alt="" className="w-full h-full object-cover" /> : null}
+                                        <div key={post.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                                            <div className="p-6">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden">
+                                                        {profile.image ? <img src={profile.image} alt="" className="w-full h-full object-cover" /> : null}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-gray-900 leading-none">{profile.organization_name || profile.name}</p>
+                                                        <span className="text-[10px] font-bold text-gray-400" suppressHydrationWarning>{formatDate(post.createdAt)}</span>
+                                                    </div>
+                                                    {isAdmin && (
+                                                        <button
+                                                            title="Supprimer"
+                                                            onClick={async () => { if (confirm('Supprimer?')) { await adminDeletePost(user!.id, post.id); window.location.reload(); } }}
+                                                            className="ml-auto p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                <div>
-                                                    <span className="block text-xs text-gray-400" suppressHydrationWarning>{formatDate(post.createdAt)}</span>
-                                                </div>
-                                                {isAdmin && (
-                                                    <button
-                                                        title="Supprimer ce post"
-                                                        onClick={async () => {
-                                                            if (confirm('Supprimer ce post ?')) {
-                                                                await adminDeletePost(user!.id, post.id);
-                                                                window.location.reload();
-                                                            }
-                                                        }}
-                                                        className="ml-auto p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            <div className="px-4 pb-2">
-                                                <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
+                                                <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{post.content}</p>
                                             </div>
 
                                             {post.image && (
-                                                <div className="mt-2">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={post.image} alt="" className="w-full h-auto object-cover max-h-96" />
+                                                <div className="aspect-video relative overflow-hidden bg-gray-100 border-y border-gray-50">
+                                                    <img src={post.image} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                             )}
 
-                                            <div className="px-4 py-3 border-t border-gray-50 flex items-center gap-6">
-                                                <button
-                                                    onClick={() => likePost(post.id)}
-                                                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${post.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                                                >
-                                                    <Heart size={20} className={post.isLiked ? "fill-current" : ""} />
-                                                    {post.likes}
-                                                </button>
-                                                <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                                                    <MessageSquare size={20} />
-                                                    {post.comments?.length || 0}
+                                            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-50">
+                                                <div className="flex items-center gap-6">
+                                                    <button
+                                                        title="Aimer la publication"
+                                                        onClick={() => likePost(post.id)}
+                                                        className={`flex items-center gap-2 text-sm font-bold transition-all hover:scale-110 ${post.isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                                                    >
+                                                        <Heart size={22} className={post.isLiked ? "fill-current" : ""} />
+                                                        {post.likes}
+                                                    </button>
+                                                    <button
+                                                        title="Voir les commentaires"
+                                                        onClick={() => toggleComments(post.id)}
+                                                        className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-[var(--marketing-orange)] transition-colors"
+                                                    >
+                                                        <MessageSquare size={22} />
+                                                        {post.comments?.length || 0}
+                                                    </button>
                                                 </div>
+                                                <ShareButton url={`/network/${profile.id}#post-${post.id}`} title="Partager cette publication" iconOnly size="sm" variant="ghost" />
                                             </div>
 
-                                            {/* Comments Area */}
-                                            <div className="bg-gray-50/50 p-4 border-t border-gray-50">
-                                                <div className="space-y-4 mb-4">
-                                                    {visibleComments.map(comment => (
-                                                        <div key={comment.id} className="space-y-2">
-                                                            {/* Parent Comment */}
-                                                            <div className="flex gap-3 text-left group">
-                                                                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                                                                    {comment.author.image ? <img src={comment.author.image} alt="" className="w-full h-full object-cover" /> : (
-                                                                        <div className="w-full h-full bg-gray-300 flex items-center justify-center text-xs font-bold text-white">
-                                                                            {comment.author.name?.[0]?.toUpperCase() || '?'}
-                                                                        </div>
-                                                                    )}
+                                            {/* Nested Comments */}
+                                            {isExpanded && (
+                                                <div className="bg-gray-50/50 p-6 space-y-4 border-t border-gray-100">
+                                                    <div className="space-y-4">
+                                                        {visibleComments.map(comment => (
+                                                            <div key={comment.id} className="flex gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 shadow-sm">
+                                                                    {comment.author.image ? <img src={comment.author.image} alt="" className="w-full h-full object-cover" /> : <User size={16} className="m-2 text-gray-400" />}
                                                                 </div>
-                                                                <div className="flex-1">
-                                                                    <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm relative">
-                                                                        <Link href={`/network/${comment.author.id}`} className="text-xs font-bold text-gray-900 mb-1 hover:underline block">
-                                                                            {comment.author.name || 'Utilisateur inconnu'}
-                                                                        </Link>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm">
+                                                                        <Link href={`/network/${comment.author.id}`} className="text-xs font-black text-gray-900 mb-1 hover:underline block">{comment.author.name}</Link>
                                                                         <CommentText text={comment.text} />
-                                                                        {isAdmin && (
-                                                                            <button
-                                                                                title="Supprimer ce commentaire"
-                                                                                onClick={async () => {
-                                                                                    if (confirm('Supprimer ce commentaire ?')) {
-                                                                                        await adminDeleteComment(user!.id, comment.id);
-                                                                                        window.location.reload();
-                                                                                    }
-                                                                                }}
-                                                                                className="ml-auto p-1.5 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                                            >
-                                                                                <Trash2 size={12} />
-                                                                            </button>
-                                                                        )}
                                                                     </div>
-                                                                    <div className="flex items-center gap-4 mt-1 ml-1">
-                                                                        <span className="text-[10px] text-gray-400" suppressHydrationWarning>{formatDate(comment.createdAt)}</span>
+                                                                    <div className="flex items-center gap-4 mt-1.5 ml-1">
+                                                                        <span className="text-[10px] font-bold text-gray-400" suppressHydrationWarning>{formatDate(comment.createdAt)}</span>
                                                                         {user && (
                                                                             <button
-                                                                                onClick={() => {
-                                                                                    setReplyingTo(replyingTo === comment.id ? null : comment.id);
-                                                                                    setReplyText(`@${comment.author.name?.split(' ')[0] || 'Utilisateur'} `);
-                                                                                }}
-                                                                                className="text-[10px] font-semibold text-gray-500 hover:text-[var(--marketing-orange)]"
+                                                                                onClick={() => { setReplyingTo(comment.id); setReplyText(`@${comment.author.name.split(' ')[0]} `); }}
+                                                                                className="text-[10px] font-black text-gray-500 hover:text-[var(--marketing-orange)] uppercase tracking-tighter"
                                                                             >
                                                                                 Répondre
                                                                             </button>
                                                                         )}
+                                                                        {isAdmin && <button onClick={async () => { if (confirm('Supprimer?')) { await adminDeleteComment(user!.id, comment.id); window.location.reload(); } }} className="text-[10px] font-bold text-red-300 hover:text-red-500 uppercase tracking-tighter">Supprimer</button>}
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                        ))}
+                                                    </div>
 
-                                                            {/* Replies */}
-                                                            {comment.replies && comment.replies.length > 0 && (
-                                                                <div className="pl-11 space-y-3">
-                                                                    {comment.replies.map(reply => (
-                                                                        <div key={reply.id} className="flex gap-3 text-left">
-                                                                            <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                                                                                {reply.author.image ? <img src={reply.author.image} alt="" className="w-full h-full object-cover" /> : (
-                                                                                    <div className="w-full h-full bg-gray-300 flex items-center justify-center text-[10px] font-bold text-white">
-                                                                                        {reply.author.name?.[0]?.toUpperCase() || '?'}
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                            <div className="flex-1">
-                                                                                <div className="bg-white p-2 rounded-xl rounded-tl-none border border-gray-100 shadow-sm">
-                                                                                    <Link href={`/network/${reply.author.id}`} className="text-[10px] font-bold text-gray-900 mb-0.5 hover:underline block">
-                                                                                        {reply.author.name || 'Utilisateur inconnu'}
-                                                                                    </Link>
-                                                                                    <CommentText text={reply.text} />
-                                                                                </div>
-                                                                                <span className="text-[10px] text-gray-400 ml-1 mt-0.5 block" suppressHydrationWarning>{formatDate(reply.createdAt)}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-
-                                                            {/* Reply Input */}
-                                                            {replyingTo === comment.id && (
-                                                                <div className="pl-11 mt-2 flex gap-2">
-                                                                    <input
-                                                                        type="text"
-                                                                        placeholder={`Répondre à ${comment.author.name?.split(' ')[0] || '...'}...`}
-                                                                        value={replyText}
-                                                                        onChange={e => setReplyText(e.target.value)}
-                                                                        className="flex-1 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-[var(--marketing-orange)]"
-                                                                        onKeyDown={e => e.key === 'Enter' && handleReplySubmit(post.id, comment.id)}
-                                                                        autoFocus
-                                                                    />
-                                                                    <button
-                                                                        title="Envoyer la réponse"
-                                                                        onClick={() => handleReplySubmit(post.id, comment.id)}
-                                                                        className="p-1.5 bg-[var(--marketing-orange)] text-white rounded-full hover:bg-[var(--marketing-orange)]/90 transition-colors"
-                                                                    >
-                                                                        <Send size={14} />
-                                                                    </button>
-                                                                </div>
-                                                            )}
+                                                    {user && (
+                                                        <div className="flex gap-3 mt-4">
+                                                            <div className="w-8 h-8 rounded-lg bg-white overflow-hidden flex-shrink-0 border border-gray-100">
+                                                                {user.image ? <img src={user.image} alt="" className="w-full h-full object-cover" /> : <User size={16} className="m-2 text-gray-400" />}
+                                                            </div>
+                                                            <div className="flex-1 relative">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Votre commentaire..."
+                                                                    value={commentTexts[post.id] || ''}
+                                                                    onChange={e => setCommentTexts(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                                                    onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(post.id)}
+                                                                    className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2 text-xs outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]/20"
+                                                                />
+                                                                <button title="Publier le commentaire" onClick={() => handleCommentSubmit(post.id)} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--marketing-orange)] p-1 hover:bg-orange-50 rounded-lg transition-colors">
+                                                                    <Send size={14} />
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                    ))}
-                                                </div>
-
-                                                {hasMoreComments && (
-                                                    <button
-                                                        onClick={() => toggleComments(post.id)}
-                                                        className="text-sm font-medium text-[var(--marketing-orange)] hover:underline pl-2"
-                                                    >
-                                                        {isExpanded ? 'Voir moins' : `Voir les ${post.comments.length - 3} autres commentaires`}
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            {/* Add Main Comment Input */}
-                                            {user && (
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Votre commentaire..."
-                                                        value={commentTexts[post.id] || ''}
-                                                        onChange={e => setCommentTexts(prev => ({ ...prev, [post.id]: e.target.value }))}
-                                                        className="flex-1 bg-white border border-gray-100 rounded-full px-4 py-2 text-xs outline-none focus:ring-1 focus:ring-[var(--marketing-orange)]"
-                                                        onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(post.id)}
-                                                    />
-                                                    <button
-                                                        title="Envoyer le commentaire"
-                                                        onClick={() => handleCommentSubmit(post.id)}
-                                                        className="p-2 text-[var(--marketing-orange)] hover:bg-[var(--marketing-orange)]/5 rounded-full transition-colors"
-                                                    >
-                                                        <Send size={18} />
-                                                    </button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
                                     );
                                 })}
-                            </>
-                        ) : (
-                            /* Reviews Tab Content */
-                            <div className="space-y-6">
-                                {/* Reviews Summary */}
-                                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-[var(--charcoal-900)]">Avis & Notes</h3>
-                                        <p className="text-gray-500 text-sm">Ce que les gens pensent </p>
+
+                                {(!profile.posts || profile.posts.length === 0) && (
+                                    <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200">
+                                        <p className="text-gray-400 font-bold">Aucune publication pour le moment.</p>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="flex items-center gap-2 justify-end mb-1">
-                                            <span className="text-3xl font-bold text-[var(--charcoal-900)]">{profile.rating || 0}</span>
-                                            <div className="flex text-yellow-400">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star key={i} size={20} className={i < Math.round(profile.rating || 0) ? "fill-current" : "text-gray-200"} />
+                                )}
+                            </div>
+                        </section>
+
+                        {/* Reviews & Ratings Section (Always visible) */}
+                        <section id="reviews" className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+                            <div className="flex items-center justify-between mb-6 px-1">
+                                <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                                    <Star className="text-[var(--marketing-orange)]" size={24} />
+                                    Avis & Notes communautaires
+                                </h3>
+                                <div className="bg-white px-4 py-1.5 rounded-full border border-gray-100 shadow-sm flex items-center gap-2">
+                                    <span className="text-lg font-black text-gray-900">{profile.rating || 0}</span>
+                                    <div className="flex text-yellow-400">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} size={14} className={i < Math.round(profile.rating || 0) ? "fill-current" : "text-gray-200"} />
+                                        ))}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">({profile.reviews?.length || 0} avis)</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Review Submission Card */}
+                                {!isOwnProfile && (
+                                    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 flex flex-col justify-center">
+                                        <h4 className="font-black text-lg mb-2">Laissez un avis</h4>
+                                        <p className="text-sm text-gray-500 mb-6 leading-snug">Votre retour aide la communauté à découvrir les meilleurs talents.</p>
+
+                                        <form onSubmit={handleReviewSubmit} className="space-y-6">
+                                            <div className="flex justify-center gap-3">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        title={`Noter ${star} étoiles`}
+                                                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                                        className={`transition-all duration-300 transform hover:scale-125 ${star <= reviewForm.rating ? 'text-yellow-400 scale-110' : 'text-gray-100'}`}
+                                                    >
+                                                        <Star size={36} className={star <= reviewForm.rating ? "fill-current" : "fill-current text-gray-100"} />
+                                                    </button>
                                                 ))}
                                             </div>
-                                        </div>
-                                        <p className="text-gray-400 text-sm">{profile.reviews?.length || 0} avis</p>
-                                    </div>
-                                </div>
-
-                                {(!profile.reviews || profile.reviews.length === 0) && (
-                                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400">
-                                        <Star size={48} className="mx-auto mb-4 opacity-20" />
-                                        <p>Aucun avis pour le moment.</p>
-                                        {!isOwnProfile && <p className="text-sm">Soyez le premier à donner votre avis !</p>}
+                                            <textarea
+                                                required
+                                                rows={3}
+                                                className="w-full px-5 py-4 border-none bg-gray-50 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]/20 transition-all resize-none shadow-inner"
+                                                placeholder="Partagez votre expérience..."
+                                                value={reviewForm.text}
+                                                onChange={e => setReviewForm({ ...reviewForm, text: e.target.value })}
+                                            />
+                                            <Button size="lg" className="w-full rounded-2xl font-black py-4 shadow-lg shadow-[var(--marketing-orange)]/10" disabled={isSubmitting}>
+                                                {isSubmitting ? <Loader2 className="animate-spin text-white" size={20} /> : "Envoyer mon avis"}
+                                            </Button>
+                                        </form>
                                     </div>
                                 )}
 
-                                {profile.reviews?.map((review) => {
-                                    const canDelete = (user?.id === review.author?.id) || isAdmin;
-                                    return (
-                                        <div key={review.id} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <Link href={`/network/${review.author?.id}`} className="block w-10 h-10 rounded-full bg-gray-200 overflow-hidden hover:opacity-80 transition-opacity">
-                                                        {review.author?.image ? <img src={review.author.image} alt="" className="w-full h-full object-cover" /> : (
-                                                            <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">{review.author?.name?.[0]?.toUpperCase() || '?'}</div>
-                                                        )}
-                                                    </Link>
-                                                    <div>
-                                                        <Link href={`/network/${review.author?.id}`} className="font-bold text-gray-900 hover:underline block">
-                                                            {review.author?.name || 'Utilisateur inconnu'}
-                                                        </Link>
-                                                        <span className="text-xs text-gray-400" suppressHydrationWarning>{formatDate(review.createdAt)}</span>
+                                {/* Individual Reviews */}
+                                <div className={`${!isOwnProfile ? 'space-y-4' : 'md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6'}`}>
+                                    {(!profile.reviews || profile.reviews.length === 0) && (
+                                        <div className={`text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200 ${isOwnProfile ? 'md:col-span-2' : ''}`}>
+                                            <Star size={40} className="mx-auto mb-3 opacity-10" />
+                                            <p className="text-gray-400 font-bold">Aucun avis pour le moment.</p>
+                                        </div>
+                                    )}
+
+                                    {profile.reviews?.slice(0, 4).map((review) => {
+                                        const canDelete = (user?.id === review.author?.id) || isAdmin;
+                                        return (
+                                            <div key={review.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm group">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-2xl bg-gray-100 overflow-hidden shadow-inner">
+                                                            {review.author?.image ? <img src={review.author.image} alt="" className="w-full h-full object-cover" /> : <User className="m-2.5 text-gray-300" />}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="font-bold text-gray-900 text-sm truncate">{review.author?.name}</p>
+                                                            <div className="flex text-yellow-400 mt-0.5">
+                                                                {[...Array(5)].map((_, i) => (
+                                                                    <Star key={i} size={10} className={i < review.rating ? "fill-current" : "text-gray-200"} />
+                                                                ))}
+                                                            </div>
+                                                        </div>
                                                     </div>
+                                                    {canDelete && (
+                                                        <button
+                                                            title="Supprimer cet avis"
+                                                            onClick={async () => { if (confirm('Supprimer cet avis?')) await deleteReview(review.id); }}
+                                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                {canDelete && (
-                                                    <button
-                                                        onClick={async () => {
-                                                            if (confirm('Supprimer cet avis ?')) {
-                                                                await deleteReview(review.id);
-                                                            }
-                                                        }}
-                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Supprimer l'avis"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
+                                                <p className="text-gray-600 text-xs leading-relaxed line-clamp-3 italic">&quot;{review.text}&quot;</p>
+                                                <p className="text-[9px] font-black text-gray-300 uppercase mt-3" suppressHydrationWarning>{formatDate(review.createdAt)}</p>
                                             </div>
-                                            <div className="flex text-yellow-400 mb-3">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star key={i} size={16} className={i < review.rating ? "fill-current" : "text-gray-200"} />
-                                                ))}
-                                            </div>
-                                            <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap">{review.text}</p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
 
-                        )}
-
-                    </div>
-
-                    {/* Sidebar */}
-                    <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm sticky top-24">
-                            <h3 className="text-lg font-bold mb-4">Interagir</h3>
-                            <p className="text-sm text-gray-500 mb-6">
-                                Soutenez cet artiste en laissant un avis ou en partageant son profil.
-                            </p>
-
-                            {!isOwnProfile ? (
-                                <>
-                                    <h4 className="font-bold text-sm mb-3 text-gray-700">Laisser un avis</h4>
-                                    <form onSubmit={handleReviewSubmit} className="space-y-4">
-                                        <div className="flex justify-center gap-2 mb-2">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <button
-                                                    key={star}
-                                                    type="button"
-                                                    title={`Noter ${star} étoiles`}
-                                                    onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                                                    className={`transition-all hover:scale-110 ${star <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-200'}`}
-                                                >
-                                                    <Star size={28} className={star <= reviewForm.rating ? "fill-current" : ""} />
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <textarea
-                                            required
-                                            rows={3}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-[var(--marketing-orange)]/20 focus:border-[var(--marketing-orange)] transition-all resize-none"
-                                            placeholder="Votre expérience avec cette personne..."
-                                            value={reviewForm.text}
-                                            onChange={e => setReviewForm({ ...reviewForm, text: e.target.value })}
-                                        />
-                                        <Button size="sm" className="w-full justify-center rounded-xl font-bold py-3" disabled={isSubmitting}>
-                                            {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : "Publier mon avis"}
-                                        </Button>
-                                    </form>
-                                </>
-                            ) : (
-                                <div className="p-4 bg-orange-50 rounded-lg text-sm text-[var(--marketing-orange)] text-center font-medium">
-                                    Ceci est votre profil.
+                                    {profile.reviews && profile.reviews.length > 4 && (
+                                        <button className="w-full py-4 text-xs font-black text-gray-400 hover:text-[var(--marketing-orange)] uppercase tracking-widest border-t border-gray-50 transition-colors">
+                                            Voir les {profile.reviews.length - 4} autres avis
+                                        </button>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        </section>
                     </div>
-
                 </div>
             </div>
         </main >

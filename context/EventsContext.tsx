@@ -25,17 +25,29 @@ export interface Event {
 
 interface EventsContextType {
     events: Event[];
+    filteredEvents: Event[];
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    categoryFilter: string;
+    setCategoryFilter: (category: string) => void;
+    locationFilter: string;
+    setLocationFilter: (location: string) => void;
     addEvent: (event: EventInput) => Promise<void>;
     deleteEvent: (slug: string) => Promise<void>;
     likeEvent: (slug: string) => Promise<void>;
     interestEvent: (slug: string) => Promise<void>;
     isLoading: boolean;
+    categories: string[];
+    locations: string[];
 }
 
 const EventsContext = createContext<EventsContextType | undefined>(undefined);
 
 export const EventsProvider = ({ children }: { children: ReactNode }) => {
     const [events, setEvents] = useState<Event[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('ALL');
+    const [locationFilter, setLocationFilter] = useState('ALL');
     const [isLoading, setIsLoading] = useState(true);
     const { addNotification } = useNotifications();
     const { user } = useAuth();
@@ -54,6 +66,24 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         loadEvents();
     }, []);
+
+    const categories = Array.from(new Set(events.map(e => e.category)));
+    const locations = Array.from(new Set(events.map(e => e.location)));
+
+    const filteredEvents = events.filter(event => {
+        const q = searchQuery.toLowerCase();
+        const matchesSearch = !searchQuery || (
+            event.title.toLowerCase().includes(q) ||
+            event.description?.toLowerCase().includes(q) ||
+            event.location.toLowerCase().includes(q) ||
+            event.category.toLowerCase().includes(q)
+        );
+
+        const matchesCategory = categoryFilter === 'ALL' || event.category === categoryFilter;
+        const matchesLocation = locationFilter === 'ALL' || event.location === locationFilter;
+
+        return matchesSearch && matchesCategory && matchesLocation;
+    });
 
     const addEvent = async (newEvent: EventInput) => {
         try {
@@ -109,7 +139,23 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <EventsContext.Provider value={{ events, addEvent, deleteEvent, likeEvent, interestEvent, isLoading }}>
+        <EventsContext.Provider value={{
+            events,
+            filteredEvents,
+            searchQuery,
+            setSearchQuery,
+            categoryFilter,
+            setCategoryFilter,
+            locationFilter,
+            setLocationFilter,
+            addEvent,
+            deleteEvent,
+            likeEvent,
+            interestEvent,
+            isLoading,
+            categories,
+            locations
+        }}>
             {children}
         </EventsContext.Provider>
     );
@@ -120,11 +166,20 @@ export const useEvents = () => {
     if (context === undefined) {
         return {
             events: [],
+            filteredEvents: [],
+            searchQuery: '',
+            setSearchQuery: () => { },
+            categoryFilter: 'ALL',
+            setCategoryFilter: () => { },
+            locationFilter: 'ALL',
+            setLocationFilter: () => { },
             addEvent: async () => { },
             deleteEvent: async () => { },
             likeEvent: async () => { },
             interestEvent: async () => { },
-            isLoading: true
+            isLoading: true,
+            categories: [],
+            locations: []
         };
     }
     return context;

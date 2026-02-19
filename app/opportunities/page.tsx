@@ -9,7 +9,18 @@ import { Plus, X, Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/components/ImageUpload';
 
 export default function OpportunitiesPage() {
-    const { opportunities, addOpportunity, isLoading } = useOpportunities();
+    const {
+        filteredOpportunities,
+        addOpportunity,
+        isLoading,
+        searchQuery,
+        setSearchQuery,
+        categoryFilter,
+        setCategoryFilter,
+        locationFilter,
+        setLocationFilter,
+        locations
+    } = useOpportunities();
     const { user } = useAuth();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,12 +35,14 @@ export default function OpportunitiesPage() {
         image: ''
     });
 
-    const categories = [
-        { id: 'grant', label: 'Bourse / Financement' },
-        { id: 'open call', label: 'Appel à projets' },
-        { id: 'training', label: 'Formation' },
-        { id: 'residency', label: 'Résidence' }
-    ];
+    const categoryLabels: Record<string, string> = {
+        'grant': 'Bourse / Financement',
+        'open call': 'Appel à projets',
+        'training': 'Formation',
+        'residency': 'Résidence'
+    };
+
+    const categoriesList = Object.entries(categoryLabels);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,15 +65,15 @@ export default function OpportunitiesPage() {
     };
 
     return (
-        <main className="min-h-screen bg-[var(--sand-50)] pt-24 pb-12">
+        <main className="min-h-screen bg-[var(--sand-50)] pt-24 pb-12 text-left">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-[var(--marketing-green)] rounded-3xl p-8 mb-12 text-white relative overflow-hidden shadow-xl">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div className="text-left">
+                    <div className="relative z-10 flex flex-col lg:flex-row justify-between lg:items-center gap-8">
+                        <div>
                             <h1 className="text-4xl font-bold mb-4">Opportunités & Financements</h1>
                             <p className="text-green-50 max-w-2xl text-lg">
-                                Développez votre carrière avec notre sélection d&apos;appels à projets, bourses, résidences et fonds de soutien dédiés aux acteurs culturels.
+                                Développez votre carrière avec notre sélection d&apos;appels à projets, bourses, résidences et fonds de soutien.
                             </p>
                         </div>
                         {user && (
@@ -74,18 +87,63 @@ export default function OpportunitiesPage() {
                     </div>
                 </div>
 
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex-1 relative">
+                        <input
+                            type="text"
+                            placeholder="Rechercher une opportunité..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-[var(--marketing-green)] outline-none"
+                        />
+                        <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 rotate-45" size={18} />
+                    </div>
+                    <select
+                        title="Filtrer par catégorie"
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="px-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-[var(--marketing-green)] outline-none cursor-pointer min-w-[200px]"
+                    >
+                        <option value="ALL">Toutes les catégories</option>
+                        {categoriesList.map(([id, label]) => (
+                            <option key={id} value={id}>{label}</option>
+                        ))}
+                    </select>
+                    <select
+                        title="Filtrer par lieu"
+                        value={locationFilter}
+                        onChange={(e) => setLocationFilter(e.target.value)}
+                        className="px-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-[var(--marketing-green)] outline-none cursor-pointer min-w-[180px]"
+                    >
+                        <option value="ALL">Tous les lieux</option>
+                        {locations.map(loc => (
+                            <option key={loc} value={loc}>{loc}</option>
+                        ))}
+                    </select>
+                </div>
+
                 {isLoading ? (
                     <div className="flex justify-center py-20">
                         <Loader2 className="animate-spin text-[var(--marketing-green)]" size={40} />
                     </div>
-                ) : opportunities.length === 0 ? (
+                ) : filteredOpportunities.length === 0 ? (
                     <div className="text-center py-20 text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
-                        <p className="text-xl">Aucune opportunité disponible pour le moment.</p>
+                        <p className="text-xl">Aucune opportunité ne correspond à vos critères.</p>
+                        <Button
+                            variant="ghost"
+                            className="mt-4 text-[var(--marketing-green)]"
+                            onClick={() => { setSearchQuery(''); setCategoryFilter('ALL'); setLocationFilter('ALL'); }}
+                        >
+                            Réinitialiser les filtres
+                        </Button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {opportunities.map((opp) => (
-                            <OpportunityCard key={opp.id} {...opp} />
+                        {filteredOpportunities.map((opp, idx) => (
+                            <div key={opp.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
+                                <OpportunityCard {...opp} />
+                            </div>
                         ))}
                     </div>
                 )}
@@ -123,8 +181,8 @@ export default function OpportunitiesPage() {
                                         onChange={e => setFormData({ ...formData, category: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-[var(--marketing-green)] outline-none"
                                     >
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.label}</option>
+                                        {categoriesList.map(([id, label]) => (
+                                            <option key={id} value={id}>{label}</option>
                                         ))}
                                     </select>
                                 </div>
