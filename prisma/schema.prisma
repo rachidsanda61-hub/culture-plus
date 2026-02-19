@@ -11,13 +11,26 @@ enum AppRole {
   ADMIN
 }
 
+enum ProfileType {
+  INDIVIDUAL
+  INTERNATIONAL_ORGANIZATION
+  DIPLOMATIC_ORGANIZATION
+  STATE_SERVICE
+  NIGHT_CLUB
+  RESTAURANT
+  HOTEL
+  CULTURAL_ENTERPRISE
+  ASSOCIATION_NGO
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
   password      String?
   phone         String?   @unique
   name          String?
-  role          String    @default("public") // This is the 'profile type' (artist, promoter, etc)
+  role          String    @default("public") // Keep for backward compatibility or general label
+  profile_type  ProfileType @default(INDIVIDUAL)
   appRole       AppRole   @default(USER)     // This is the 'system access' role (ADMIN, USER)
   image         String?
   createdAt     DateTime  @default(now())
@@ -29,6 +42,14 @@ model User {
   tags          String[]
   rating        Float     @default(0)
   followers     Int       @default(0)
+
+  // Specialized fields
+  organization_name  String?
+  country            String?
+  city               String?
+  official_website   String?
+  verified_status    Boolean @default(false)
+  address            String? // Added for Hotels/Restaurants etc
 
   // Relations
   posts         Post[]

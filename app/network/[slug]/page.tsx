@@ -6,11 +6,17 @@ import { useProfiles } from '@/context/ProfilesContext';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
-import { MapPin, UserPlus, UserCheck, UserMinus, Star, MessageSquare, Heart, Image as ImageIcon, Send, Loader2, Trash2 } from 'lucide-react';
+import {
+    MapPin, UserPlus, UserCheck, UserMinus, Star, MessageSquare, Heart,
+    Image as ImageIcon, Send, Loader2, Trash2, BadgeCheck,
+    Globe as GlobeIcon, Building, MapPin as MapIcon, User, Globe,
+    Flag, Landmark, Music, Utensils, Hotel, Building2
+} from 'lucide-react';
 import { ShareButton } from '@/components/ShareButton';
 import { ImageUpload } from '@/components/ImageUpload';
 import { adminDeletePost, adminDeleteComment, adminDeleteReview } from '@/app/actions/admin';
 import { ProfileImageModal } from '@/components/ProfileImageModal';
+import { ProfileType } from '@prisma/client';
 
 // Moved outside to avoid re-creation
 const formatDate = (date: Date | string) => {
@@ -24,6 +30,18 @@ const formatDate = (date: Date | string) => {
         month: 'short',
         year: 'numeric'
     });
+};
+
+const PROFILE_TYPE_CONFIG: Record<ProfileType, { label: string, color: string, icon: any }> = {
+    [ProfileType.INDIVIDUAL]: { label: 'Individuel', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: User },
+    [ProfileType.INTERNATIONAL_ORGANIZATION]: { label: 'Org. Internationale', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Globe },
+    [ProfileType.DIPLOMATIC_ORGANIZATION]: { label: 'Ambassade / Diplomatie', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Flag },
+    [ProfileType.STATE_SERVICE]: { label: 'Service de l’État', color: 'bg-red-100 text-red-700 border-red-200', icon: Landmark },
+    [ProfileType.NIGHT_CLUB]: { label: 'Boîte de nuit', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Music },
+    [ProfileType.RESTAURANT]: { label: 'Restaurant', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Utensils },
+    [ProfileType.HOTEL]: { label: 'Hôtel', color: 'bg-teal-100 text-teal-700 border-teal-200', icon: Hotel },
+    [ProfileType.CULTURAL_ENTERPRISE]: { label: 'Entreprise Culturelle', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Building2 },
+    [ProfileType.ASSOCIATION_NGO]: { label: 'Association / ONG', color: 'bg-pink-100 text-pink-700 border-pink-200', icon: Heart },
 };
 
 export default function ProfileDetailPage() {
@@ -74,6 +92,7 @@ export default function ProfileDetailPage() {
 
     const isOwnProfile = user?.id === profile.id;
     const isAdmin = (user as any)?.appRole === 'ADMIN';
+    const typeConfig = PROFILE_TYPE_CONFIG[profile.profile_type] || PROFILE_TYPE_CONFIG[ProfileType.INDIVIDUAL];
 
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -154,7 +173,7 @@ export default function ProfileDetailPage() {
     };
 
     return (
-        <main className="min-h-screen bg-[var(--sand-50)] pt-24 pb-20">
+        <main className="min-h-screen bg-gray-50 pt-24 pb-20">
             {profile && (
                 <ProfileImageModal
                     isOpen={isImageModalOpen}
@@ -165,81 +184,151 @@ export default function ProfileDetailPage() {
                     onUpdate={handleImageUpdate}
                 />
             )}
-            <div className="max-w-4xl mx-auto px-4">
+            <div className="max-w-5xl mx-auto px-4">
 
                 {/* Profile Header */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                    <div className="h-32 bg-gradient-to-r from-[var(--marketing-orange)] to-[var(--marketing-orange-light)]"></div>
-                    <div className="px-8 pb-8">
-                        <div className="relative flex justify-between items-end -mt-12 mb-4">
-                            <button
-                                onClick={() => setIsImageModalOpen(true)}
-                                className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md transition-transform hover:scale-105 active:scale-95 cursor-pointer relative group"
-                            >
-                                {profile.image ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={profile.image} alt={profile.name} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-gray-300 flex items-center justify-center text-4xl text-white font-bold">
-                                        {profile.name?.[0]?.toUpperCase() || '?'}
+                <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden mb-8">
+                    <div className={`h-48 bg-gradient-to-br transition-all duration-700 ${profile.profile_type === ProfileType.INDIVIDUAL ? 'from-[var(--marketing-orange)] to-orange-400' : 'from-gray-800 to-gray-600'}`}></div>
+                    <div className="px-8 pb-10">
+                        <div className="relative flex flex-col md:flex-row justify-between items-center md:items-end -mt-20 mb-8 gap-6 text-center md:text-left">
+                            <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+                                <button
+                                    onClick={() => setIsImageModalOpen(true)}
+                                    className={`w-40 h-40 rounded-3xl border-[6px] border-white bg-white overflow-hidden shadow-2xl transition-transform hover:scale-105 active:scale-95 cursor-pointer relative group ${profile.profile_type === ProfileType.INDIVIDUAL ? 'rounded-full' : ''}`}
+                                >
+                                    {profile.image ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={profile.image} alt={profile.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-50 flex items-center justify-center text-5xl text-gray-300 font-bold">
+                                            {profile.name?.[0]?.toUpperCase() || '?'}
+                                        </div>
+                                    )}
+                                    {isOwnProfile && (
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <ImageIcon className="text-white" size={32} />
+                                        </div>
+                                    )}
+                                </button>
+                                <div className="md:mb-4">
+                                    <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                                        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+                                            {profile.organization_name || profile.name}
+                                        </h1>
+                                        {profile.verified_status && (
+                                            <BadgeCheck className="text-blue-500 fill-blue-50" size={28} />
+                                        )}
                                     </div>
-                                )}
-                                {isOwnProfile && (
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <ImageIcon className="text-white" size={24} />
+                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                                        <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold border ${typeConfig.color}`}>
+                                            <typeConfig.icon size={14} />
+                                            {typeConfig.label}
+                                        </span>
+                                        {profile.organization_name && profile.name && (
+                                            <span className="text-gray-400 text-sm font-medium">Représenté par {profile.name}</span>
+                                        )}
                                     </div>
-                                )}
-                            </button>
-                            <div className="flex gap-2">
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mb-4">
                                 {!isOwnProfile && (
                                     <Button
                                         onClick={() => followProfile(profile.id)}
                                         disabled={isFollowProcessing}
                                         variant={profile.isFollowed ? "outline" : "primary"}
-                                        className={`group ${profile.isFollowed ? "text-green-600 border-green-600 bg-green-50 hover:bg-red-50 hover:border-red-600 hover:text-red-600" : ""}`}
+                                        className={`rounded-2xl px-6 py-6 h-auto shadow-lg shadow-[var(--marketing-orange)]/10 group ${profile.isFollowed ? "text-green-600 border-green-600 bg-green-50 hover:bg-red-50 hover:border-red-600 hover:text-red-600" : ""}`}
                                     >
-                                        {isFollowProcessing ? <Loader2 className="animate-spin" size={18} /> : (profile.isFollowed ? (
+                                        {isFollowProcessing ? <Loader2 className="animate-spin" size={20} /> : (profile.isFollowed ? (
                                             <>
-                                                <span className="group-hover:hidden flex items-center gap-2"><UserCheck size={18} /> Suivi</span>
-                                                <span className="hidden group-hover:flex items-center gap-2"><UserMinus size={18} /> Se désabonner</span>
+                                                <span className="group-hover:hidden flex items-center gap-2 font-bold"><UserCheck size={20} /> Abonné</span>
+                                                <span className="hidden group-hover:flex items-center gap-2 font-bold"><UserMinus size={20} /> Se désabonner</span>
                                             </>
-                                        ) : <><UserPlus size={18} /> Suivre</>)}
+                                        ) : <><UserPlus size={20} /> S&apos;abonner</>)}
                                     </Button>
                                 )}
                                 <Link href={`/messages?with=${profile.id}`}>
-                                    <Button variant="outline" className="gap-2">
-                                        <MessageSquare size={18} /> Contacter
+                                    <Button variant="outline" className="rounded-2xl px-6 py-6 h-auto border-gray-200 hover:bg-gray-50 gap-2 font-bold transition-all">
+                                        <MessageSquare size={20} /> Message
                                     </Button>
                                 </Link>
                                 <ShareButton
                                     url={`/network/${profile.id}`}
                                     title={`Découvrez ${profile.name} sur Culture+`}
-                                    text={`Regarde ce profil incroyable de ${profile.role} :`}
+                                    text={`Regarde ce profil de ${profile.role} :`}
                                     variant="outline"
                                     iconOnly
+                                    className="rounded-2xl w-14 h-14 border-gray-200"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <h1 className="text-3xl font-bold text-[var(--charcoal-900)] mb-2">{profile.name}</h1>
-                            <div className="flex flex-wrap gap-4 text-[var(--charcoal-600)] mb-4">
-                                <span className="bg-[var(--sand-100)] px-3 py-1 rounded-full text-sm font-medium text-[var(--marketing-orange)]">
-                                    {profile.role}
-                                </span>
-                                {profile.location && (
-                                    <div className="flex items-center gap-1">
-                                        <MapPin size={18} /> {profile.location}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pt-8 border-t border-gray-50">
+                            <div className="md:col-span-3">
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">À propos</h3>
+                                <p className="text-gray-600 text-lg leading-relaxed max-w-3xl">
+                                    {profile.bio || "Aucune description fournie."}
+                                </p>
+
+                                <div className="flex flex-wrap gap-8 mt-8">
+                                    <div className="flex flex-col">
+                                        <span className="text-2xl font-black text-gray-900">{profile.followers || 0}</span>
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Abonnés</span>
                                     </div>
-                                )}
-                                <div className="flex items-center gap-1 font-bold" title="Note moyenne">
-                                    <Star size={18} className="text-yellow-400 fill-yellow-400" /> {profile.rating || 0}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <strong>{profile.followers || 0}</strong> abonnés
+                                    <div className="flex flex-col border-l border-gray-100 pl-8">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-2xl font-black text-gray-900">{profile.rating || 0}</span>
+                                            <Star size={20} className="text-yellow-400 fill-yellow-400" />
+                                        </div>
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Note Moyenne</span>
+                                    </div>
+                                    <div className="flex flex-col border-l border-gray-100 pl-8">
+                                        <span className="text-2xl font-black text-gray-900">{profile.reviews?.length || 0}</span>
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Avis</span>
+                                    </div>
                                 </div>
                             </div>
-                            {profile.bio && <p className="text-gray-600 max-w-2xl">{profile.bio}</p>}
+
+                            <div className="bg-gray-50/50 rounded-3xl p-6 border border-gray-100">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Informations</h3>
+                                <div className="space-y-4">
+                                    {(profile.country || profile.city) && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                <MapIcon size={14} className="text-gray-400" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-gray-500">Localisation</span>
+                                                <span className="text-sm font-medium text-gray-900">{profile.city}{profile.city && profile.country ? ', ' : ''}{profile.country}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {profile.address && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                <Building size={14} className="text-gray-400" />
+                                            </div>
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-xs font-bold text-gray-500">Addresse</span>
+                                                <span className="text-sm font-medium text-gray-900 leading-tight">{profile.address}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {profile.official_website && (
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                <GlobeIcon size={14} className="text-gray-400" />
+                                            </div>
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-xs font-bold text-gray-500">Site Web</span>
+                                                <a href={profile.official_website} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-[var(--marketing-orange)] truncate max-w-[150px] hover:underline">
+                                                    {profile.official_website.replace(/^https?:\/\//, '')}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

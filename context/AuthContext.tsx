@@ -4,21 +4,40 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import { login as loginAction, register as registerAction, changePassword as changePasswordAction } from '@/app/actions/auth';
 import { toast } from 'react-hot-toast';
+import { ProfileType } from '@prisma/client';
 
 export interface User {
     id: string;
     email: string;
     name: string | null;
     role: string;
+    profile_type: ProfileType;
     appRole: string;
     image?: string | null;
+    organization_name?: string | null;
+    country?: string | null;
+    city?: string | null;
+    official_website?: string | null;
+    verified_status?: boolean;
 }
 
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     login: (email: string, password?: string) => Promise<boolean>;
-    register: (user: { name: string, email: string, phone?: string, password?: string, role: string }) => Promise<void>;
+    register: (user: {
+        name: string,
+        email: string,
+        phone?: string,
+        password?: string,
+        role: string,
+        profile_type: ProfileType,
+        organization_name?: string,
+        country?: string,
+        city?: string,
+        official_website?: string,
+        address?: string
+    }) => Promise<void>;
     changePassword: (currentPassword?: string, newPassword?: string) => Promise<void>;
     logout: () => void;
     isLoading: boolean;
@@ -68,7 +87,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const register = async (userData: { name: string, email: string, phone?: string, password?: string, role: string }) => {
+    const register = async (userData: {
+        name: string,
+        email: string,
+        phone?: string,
+        password?: string,
+        role: string,
+        profile_type: ProfileType,
+        organization_name?: string,
+        country?: string,
+        city?: string,
+        official_website?: string,
+        address?: string
+    }) => {
         try {
             const newUser = await registerAction(userData);
             setUser(newUser as User);

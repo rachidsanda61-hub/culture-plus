@@ -65,3 +65,27 @@ export async function getAllUsers(adminId: string) {
         }
     });
 }
+
+export async function adminToggleVerify(adminId: string, userId: string, status: boolean) {
+    await checkAdmin(adminId);
+    const user = await prisma.user.update({
+        where: { id: userId },
+        data: { verified_status: status }
+    });
+    revalidatePath('/network');
+    revalidatePath(`/network/${userId}`);
+    return user;
+}
+
+import { ProfileType } from '@prisma/client';
+
+export async function adminUpdateProfileType(adminId: string, userId: string, type: ProfileType) {
+    await checkAdmin(adminId);
+    const user = await prisma.user.update({
+        where: { id: userId },
+        data: { profile_type: type }
+    });
+    revalidatePath('/network');
+    revalidatePath(`/network/${userId}`);
+    return user;
+}

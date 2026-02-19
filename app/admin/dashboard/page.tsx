@@ -15,7 +15,21 @@ import Link from 'next/link';
 import { ImageUpload } from '@/components/ImageUpload';
 import { getHeroSlides, addHeroSlide, deleteHeroSlide } from '@/app/actions/carousel';
 import { getPartners, addPartner, deletePartner, getAds, addAd, deleteAd } from '@/app/actions/ads';
-import { getAllUsers, adminDeleteUser } from '@/app/actions/admin';
+import { getAllUsers, adminDeleteUser, adminToggleVerify, adminUpdateProfileType } from '@/app/actions/admin';
+import { ProfileType } from '@prisma/client';
+import { BadgeCheck, ShieldCheck, ShieldAlert, CheckCircle2, XCircle } from 'lucide-react';
+
+const TYPE_COLORS: Record<ProfileType, string> = {
+    [ProfileType.INDIVIDUAL]: 'bg-orange-100 text-orange-700',
+    [ProfileType.INTERNATIONAL_ORGANIZATION]: 'bg-blue-100 text-blue-700',
+    [ProfileType.DIPLOMATIC_ORGANIZATION]: 'bg-amber-100 text-amber-700',
+    [ProfileType.STATE_SERVICE]: 'bg-red-100 text-red-700',
+    [ProfileType.NIGHT_CLUB]: 'bg-purple-100 text-purple-700',
+    [ProfileType.RESTAURANT]: 'bg-emerald-100 text-emerald-700',
+    [ProfileType.HOTEL]: 'bg-teal-100 text-teal-700',
+    [ProfileType.CULTURAL_ENTERPRISE]: 'bg-indigo-100 text-indigo-700',
+    [ProfileType.ASSOCIATION_NGO]: 'bg-pink-100 text-pink-700',
+};
 
 export default function AdminDashboard() {
     const { events, deleteEvent } = useEvents();
@@ -83,6 +97,24 @@ export default function AdminDashboard() {
         if (confirm('Supprimer définitivement cet utilisateur ?')) {
             await adminDeleteUser(user!.id, uid);
             loadAllAdminData();
+        }
+    };
+
+    const handleToggleVerify = async (uid: string, currentStatus: boolean) => {
+        try {
+            await adminToggleVerify(user!.id, uid, !currentStatus);
+            loadAllAdminData();
+        } catch (error) {
+            alert("Erreur lors de la vérification");
+        }
+    };
+
+    const handleUpdateType = async (uid: string, type: ProfileType) => {
+        try {
+            await adminUpdateProfileType(user!.id, uid, type);
+            loadAllAdminData();
+        } catch (error) {
+            alert("Erreur lors de la mise à jour du type");
         }
     };
 
@@ -354,30 +386,62 @@ export default function AdminDashboard() {
                                             <thead className="bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                                 <tr>
                                                     <th className="px-6 py-4">Utilisateur</th>
-                                                    <th className="px-6 py-4">Email</th>
-                                                    <th className="px-6 py-4">Rôle Système</th>
+                                                    <th className="px-6 py-4">Type de Profil</th>
+                                                    <th className="px-6 py-4">Vérifié</th>
                                                     <th className="px-6 py-4 text-right">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
                                                 {allUsers.map(u => (
                                                     <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
-                                                        <td className="px-6 py-4 flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                                                                {u.image && <img src={u.image} alt="" className="w-full h-full object-cover" />}
-                                                            </div>
-                                                            <span className="font-bold">{u.name || 'Sans nom'}</span>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-gray-600">{u.email}</td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase ${u.appRole === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
-                                                                {u.appRole}
-                                                            </span>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shadow-inner">
+                                                                    {u.image && <img src={u.image} alt="" className="w-full h-full object-cover" />}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-bold text-gray-900 block">{u.name || 'Sans nom'}</span>
+                                                                    <span className="text-xs text-gray-400">{u.email}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <select
+                                                                title="Changer le type de profil"
+                                                                value={u.profile_type}
+                                                                onChange={(e) => handleUpdateType(u.id, e.target.value as ProfileType)}
+                                                                className={`text-[10px] font-black uppercase px-2 py-1 rounded border-none appearance-none cursor-pointer focus:ring-2 focus:ring-[var(--marketing-orange)]/20 ${TYPE_COLORS[u.profile_type as ProfileType] || 'bg-gray-100 text-gray-600'}`}
+                                                            >
+                                                                {(Object.values(ProfileType) as ProfileType[]).map(type => (
+                                                                    <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <button
+                                                                onClick={() => handleToggleVerify(u.id, u.verified_status)}
+                                                                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${u.verified_status ? 'bg-blue-100 text-blue-700 hover:bg-red-100 hover:text-red-700' : 'bg-gray-100 text-gray-400 hover:bg-blue-100 hover:text-blue-700'}`}
+                                                            >
+                                                                {u.verified_status ? (
+                                                                    <><BadgeCheck size={14} /> Vérifié</>
+                                                                ) : (
+                                                                    <><ShieldAlert size={14} /> Non vérifié</>
+                                                                )}
+                                                            </button>
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
-                                                            {u.id !== user?.id && (
-                                                                <button onClick={() => handleDeleteUser(u.id)} className="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
-                                                            )}
+                                                            <div className="flex justify-end gap-2">
+                                                                {u.id !== user?.id && (
+                                                                    <button onClick={() => handleDeleteUser(u.id)} className="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Supprimer l'utilisateur">
+                                                                        <Trash2 size={18} />
+                                                                    </button>
+                                                                )}
+                                                                <Link href={`/network/${u.id}`} target="_blank">
+                                                                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg" title="Voir le profil">
+                                                                        <ExternalLink size={18} />
+                                                                    </button>
+                                                                </Link>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}

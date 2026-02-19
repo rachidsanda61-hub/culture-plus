@@ -5,6 +5,7 @@ import { getProfiles, followProfile as followProfileAction, updateProfile as upd
 import { useAuth } from './AuthContext';
 import { toast } from 'react-hot-toast';
 import { useNotifications } from './NotificationsContext';
+import { ProfileType } from '@prisma/client';
 
 export interface Review {
     id: string;
@@ -38,6 +39,13 @@ export interface Profile {
     id: string;
     name: string;
     role: string;
+    profile_type: ProfileType;
+    organization_name?: string | null;
+    country?: string | null;
+    city?: string | null;
+    official_website?: string | null;
+    verified_status?: boolean;
+    address?: string | null;
     location: string | null;
     image?: string | null;
     tags: string[];
@@ -54,8 +62,24 @@ interface ProfilesContextType {
     filteredProfiles: Profile[];
     searchQuery: string;
     setSearchQuery: (query: string) => void;
+    selectedType: ProfileType | 'ALL';
+    setSelectedType: (type: ProfileType | 'ALL') => void;
+    selectedCountry: string | 'ALL';
+    setSelectedCountry: (country: string | 'ALL') => void;
     followProfile: (targetId: string) => Promise<void>;
-    updateProfile: (data: { name?: string, bio?: string, image?: string, location?: string, tags?: string[] }) => Promise<void>;
+    updateProfile: (data: {
+        name?: string,
+        bio?: string,
+        image?: string,
+        location?: string,
+        tags?: string[],
+        organization_name?: string,
+        country?: string,
+        city?: string,
+        official_website?: string,
+        address?: string,
+        profile_type?: ProfileType
+    }) => Promise<void>;
     addReview: (targetId: string, review: { rating: number; text: string }) => Promise<void>;
     deleteReview: (reviewId: string) => Promise<void>;
     addPost: (content: string, image?: string) => Promise<void>;
@@ -71,6 +95,8 @@ const ProfilesContext = createContext<ProfilesContextType | undefined>(undefined
 export const ProfilesProvider = ({ children }: { children: ReactNode }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedType, setSelectedType] = useState<ProfileType | 'ALL'>('ALL');
+    const [selectedCountry, setSelectedCountry] = useState<string | 'ALL'>('ALL');
     const [isLoading, setIsLoading] = useState(true);
     const { user } = useAuth();
     const { addNotification } = useNotifications();
@@ -92,13 +118,26 @@ export const ProfilesProvider = ({ children }: { children: ReactNode }) => {
 
     const filteredProfiles = profiles.filter(profile => {
         const query = searchQuery.toLowerCase();
-        return (
+
+        // Match Search Query
+        const matchesSearch = !searchQuery || (
             profile.name.toLowerCase().includes(query) ||
             profile.role.toLowerCase().includes(query) ||
             (profile.bio && profile.bio.toLowerCase().includes(query)) ||
             (profile.location && profile.location.toLowerCase().includes(query)) ||
+            (profile.organization_name && profile.organization_name.toLowerCase().includes(query)) ||
+            (profile.country && profile.country.toLowerCase().includes(query)) ||
+            (profile.city && profile.city.toLowerCase().includes(query)) ||
             profile.tags.some(tag => tag.toLowerCase().includes(query))
         );
+
+        // Match Type Filter
+        const matchesType = selectedType === 'ALL' || profile.profile_type === selectedType;
+
+        // Match Country Filter
+        const matchesCountry = selectedCountry === 'ALL' || profile.country === selectedCountry;
+
+        return matchesSearch && matchesType && matchesCountry;
     });
 
     const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
@@ -130,7 +169,19 @@ export const ProfilesProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const updateProfile = async (data: { name?: string, bio?: string, image?: string, location?: string, tags?: string[] }) => {
+    const updateProfile = async (data: {
+        name?: string,
+        bio?: string,
+        image?: string,
+        location?: string,
+        tags?: string[],
+        organization_name?: string,
+        country?: string,
+        city?: string,
+        official_website?: string,
+        address?: string,
+        profile_type?: ProfileType
+    }) => {
         try {
             if (!user) return;
             await updateProfileAction(user.id, data);
@@ -202,7 +253,26 @@ export const ProfilesProvider = ({ children }: { children: ReactNode }) => {
     const isProcessingFollow = (id: string) => followingIds.has(id);
 
     return (
-        <ProfilesContext.Provider value={{ profiles, filteredProfiles, searchQuery, setSearchQuery, followProfile, updateProfile, addReview, deleteReview, addPost, addComment, likePost, getProfileById, isLoading, isProcessingFollow }}>
+        <ProfilesContext.Provider value={{
+            profiles,
+            filteredProfiles,
+            searchQuery,
+            setSearchQuery,
+            selectedType,
+            setSelectedType,
+            selectedCountry,
+            setSelectedCountry,
+            followProfile,
+            updateProfile,
+            addReview,
+            deleteReview,
+            addPost,
+            addComment,
+            likePost,
+            getProfileById,
+            isLoading,
+            isProcessingFollow
+        }}>
             {children}
         </ProfilesContext.Provider>
     );
@@ -216,6 +286,10 @@ export const useProfiles = () => {
             filteredProfiles: [],
             searchQuery: '',
             setSearchQuery: () => { },
+            selectedType: 'ALL' as const,
+            setSelectedType: () => { },
+            selectedCountry: 'ALL' as const,
+            setSelectedCountry: () => { },
             followProfile: async () => { },
             updateProfile: async () => { },
             addReview: async () => { },

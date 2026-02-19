@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcryptjs';
 
+import { ProfileType } from '@prisma/client';
+
 export async function login(email: string, password?: string) {
     try {
         console.log(`[AUTH-DEBUG] Login attempt for: ${email}`);
@@ -40,6 +42,7 @@ export async function login(email: string, password?: string) {
             email: user.email,
             name: user.name,
             role: user.role,
+            profile_type: user.profile_type,
             appRole: user.appRole,
             image: user.image
         };
@@ -50,7 +53,21 @@ export async function login(email: string, password?: string) {
     }
 }
 
-export async function register(data: { name: string, email: string, phone?: string, password?: string, role: string }) {
+import { createNotification } from '@/app/actions/notifications';
+
+export async function register(data: {
+    name: string,
+    email: string,
+    phone?: string,
+    password?: string,
+    role: string,
+    profile_type: ProfileType,
+    organization_name?: string,
+    country?: string,
+    city?: string,
+    official_website?: string,
+    address?: string
+}) {
     try {
         console.log(`[AUTH-DEBUG] Reg attempt for: ${data.email}`);
 
@@ -74,16 +91,46 @@ export async function register(data: { name: string, email: string, phone?: stri
                 phone: data.phone,
                 password: hashedPassword,
                 role: data.role,
+                profile_type: data.profile_type,
+                organization_name: data.organization_name,
+                country: data.country,
+                city: data.city,
+                official_website: data.official_website,
+                address: data.address,
+                verified_status: false // Explicit default
             }
         });
 
+        // Notify admins if it's an organization or institutional profile
+        if (data.profile_type !== ProfileType.INDIVIDUAL) {
+            try {
+                const admins = await prisma.user.findMany({
+                    where: { appRole: 'ADMIN' },
+                    select: { id: true }
+                });
+
+                for (const admin of admins) {
+                    await createNotification(admin.id, {
+                        type: 'follow', // Using follow as a generic "new entity" type or we could add 'admin'
+                        title: 'Nouveau Profil à Vérifier',
+                        message: `${data.organization_name || data.name} s'est inscrit en tant que ${data.profile_type}.`,
+                        link: `/admin/dashboard` // Or dynamic link to user management
+                    });
+                }
+            } catch (notifError) {
+                console.error('Failed to notify admins:', notifError);
+            }
+        }
+
         console.log(`[AUTH-DEBUG] Reg SUCCESS: ${user.id}`);
         revalidatePath('/');
+        revalidatePath('/network');
         return {
             id: user.id,
             email: user.email,
             name: user.name,
             role: user.role,
+            profile_type: user.profile_type,
             appRole: user.appRole,
             image: user.image
         };
