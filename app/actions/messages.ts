@@ -1,79 +1,172 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
 
 export async function getConversations(userId: string) {
     try {
-        // Fetch all messages involving the user
-        const messages = await prisma.message.findMany({
-            where: {
-                OR: [
-                    { senderId: userId },
-                    { receiverId: userId }
-                ]
-            },
-            orderBy: { createdAt: 'desc' },
+        const participations = await prisma.conversationParticipant.findMany({
+            where: { userId },
             include: {
-                sender: {
-                    select: { id: true, name: true, image: true }
-                },
-                receiver: {
-                    select: { id: true, name: true, image: true }
+                conversation: {
+                    include: {
+                        participants: {
+                            where: { userId: { not: userId } },
+                            include: { user: { select: { id: true, name: true, image: true } } }
+                        },
+                        messages: {
+                            orderBy: { createdAt: 'desc' },
+                            take: 1
+                        }
+                    }
                 }
             }
         });
 
-        // Group into conversations
-        const conversationsMap = new Map();
+        const conversations = await Promise.all(participations.map(async (p: any) => {
+            const partnerParam = p.conversation.participants[0];
+            const partnerInfo = partnerParam?.user;
+            const lastMessage = p.conversation.messages[0] || null;
 
-        messages.forEach((msg: any) => {
-            const partnerId = msg.senderId === userId ? msg.receiverId : msg.senderId;
-            if (!conversationsMap.has(partnerId)) {
-                conversationsMap.set(partnerId, {
-                    partnerId,
-                    messages: []
-                });
-            }
-            conversationsMap.get(partnerId).messages.unshift(msg); // Add to end (since we fetched desc and group as asc)
+            const unreadCount = partnerParam ? await prisma.message.count({
+                where: {
+                    conversationId: p.conversation.id,
+                    senderId: partnerParam.userId,
+                    isSeen: false
+                }
+            }) : 0;
+
+            return {
+                id: p.conversation.id,
+                partnerId: partnerInfo?.id || '',
+                partnerName: partnerInfo?.name || 'Utilisateur',
+                partnerImage: partnerInfo?.image || null,
+                partnerLastTypedAt: partnerParam?.lastTypedAt || null,
+                updatedAt: p.conversation.updatedAt,
+                lastMessage: lastMessage ? {
+                    content: lastMessage.content,
+                    createdAt: lastMessage.createdAt,
+                    senderId: lastMessage.senderId,
+                    isSeen: lastMessage.isSeen
+                } : null,
+                unreadCount
+            };
+        }));
+
+        return conversations.sort((a, b) => {
+            const dateA = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : new Date(a.updatedAt).getTime();
+            const dateB = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : new Date(b.updatedAt).getTime();
+            return dateB - dateA;
         });
 
-        return Array.from(conversationsMap.values());
     } catch (error) {
-        console.error('Failed to fetch conversations:', error);
+        console.error('Failed to get conversations', error);
         return [];
     }
 }
 
-export async function sendMessage(senderId: string, receiverId: string, content: string) {
+export async function getConversationMessages(conversationId: string, userId: string) {
     try {
-        const message = await prisma.message.create({
-            data: {
-                senderId,
-                receiverId,
-                content
-            }
+        const isParticipant = await prisma.conversationParticipant.findFirst({
+            where: { conversationId, userId }
         });
-        revalidatePath('/messages');
-        return message;
-    } catch (error) {
-        console.error('Failed to send message:', error);
-        throw new Error('Failed to send message');
+
+        if (!isParticipant) throw new Error("Unauthorized");
+
+        const messages = await prisma.message.findMany({
+            where: { conversationId },
+            orderBy: { createdAt: 'asc' }
+        });
+
+        return messages;
+    } catch (err) {
+        console.error('Failed to get messages', err);
+        return [];
     }
 }
 
-export async function markMessagesAsRead(userId: string, partnerId: string) {
+export async function sendMessage(conversationId: string, senderId: string, content: string) {
     try {
+        const message = await prisma.message.create({
+            data: {
+                conversationId,
+                senderId,
+                content,
+                isSeen: false
+            }
+        });
+
+        await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { updatedAt: new Date() }
+        });
+
+        return message;
+    } catch (err) {
+        console.error("Failed to send message", err);
+        throw err;
+    }
+}
+
+export async function getOrCreateConversation(userId: string, partnerId: string) {
+    if (userId === partnerId) throw new Error("Cannot message yourself");
+
+    const existingParticipationUser = await prisma.conversationParticipant.findMany({
+        where: { userId }
+    });
+
+    const existingParticipationPartner = await prisma.conversationParticipant.findMany({
+        where: { userId: partnerId }
+    });
+
+    const userConvIds = new Set(existingParticipationUser.map((p: any) => p.conversationId));
+    const commonConvId = existingParticipationPartner.find((p: any) => userConvIds.has(p.conversationId))?.conversationId;
+
+    if (commonConvId) {
+        return commonConvId;
+    }
+
+    const newConv = await prisma.conversation.create({
+        data: {
+            participants: {
+                create: [
+                    { userId },
+                    { userId: partnerId }
+                ]
+            }
+        }
+    });
+
+    return newConv.id;
+}
+
+export async function markAsSeen(conversationId: string, userId: string) {
+    try {
+        const partner = await prisma.conversationParticipant.findFirst({
+            where: { conversationId, userId: { not: userId } }
+        });
+
+        if (!partner) return;
+
         await prisma.message.updateMany({
             where: {
-                senderId: partnerId,
-                receiverId: userId,
-                read: false
+                conversationId,
+                senderId: partner.userId,
+                isSeen: false
             },
-            data: { read: true }
+            data: { isSeen: true }
         });
-        revalidatePath('/messages');
-    } catch (error) {
-        console.error('Failed to mark as read:', error);
+    } catch (e) {
+        console.error("markAsSeen error", e);
+    }
+}
+
+export async function setTypingStatus(conversationId: string, userId: string, isTyping: boolean) {
+    try {
+        await prisma.conversationParticipant.update({
+            where: { conversationId_userId: { conversationId, userId } },
+            data: { lastTypedAt: isTyping ? new Date() : null }
+        });
+    } catch (e) {
+        console.error("set typing error", e);
     }
 }

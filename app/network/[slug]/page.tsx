@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useProfiles } from '@/context/ProfilesContext';
 import { useAuth } from '@/context/AuthContext';
+import { useMessages } from '@/context/MessagesContext';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
 import {
@@ -46,8 +47,10 @@ const PROFILE_TYPE_CONFIG: Record<ProfileType, { label: string, color: string, i
 
 export default function ProfileDetailPage() {
     const { slug } = useParams();
+    const router = useRouter();
     const { getProfileById, followProfile, addReview, deleteReview, addPost, addComment, likePost, isLoading, isProcessingFollow, updateProfile } = useProfiles();
     const { user } = useAuth();
+    const { startConversation } = useMessages();
 
     // All hooks must be called before any conditional returns
     const [mounted, setMounted] = useState(false);
@@ -93,6 +96,18 @@ export default function ProfileDetailPage() {
     const isOwnProfile = user?.id === profile.id;
     const isAdmin = (user as any)?.appRole === 'ADMIN';
     const typeConfig = PROFILE_TYPE_CONFIG[profile.profile_type] || PROFILE_TYPE_CONFIG[ProfileType.INDIVIDUAL];
+
+    const handleContact = async () => {
+        setIsSubmitting(true);
+        try {
+            const convId = await startConversation(profile!.id);
+            if (convId) {
+                router.push(`/messages?conv=${convId}`);
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -247,11 +262,9 @@ export default function ProfileDetailPage() {
                                         ) : <><UserPlus size={20} /> S&apos;abonner</>)}
                                     </Button>
                                 )}
-                                <Link href={`/messages?with=${profile.id}`}>
-                                    <Button variant="outline" className="rounded-2xl px-6 py-6 h-auto border-gray-200 hover:bg-gray-50 gap-2 font-bold transition-all">
-                                        <MessageSquare size={20} /> Message
-                                    </Button>
-                                </Link>
+                                <Button onClick={handleContact} disabled={isSubmitting} variant="outline" className="rounded-2xl px-6 py-6 h-auto border-gray-200 hover:bg-gray-50 gap-2 font-bold transition-all">
+                                    {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <><MessageSquare size={20} /> Message</>}
+                                </Button>
                                 <ShareButton
                                     url={`/network/${profile.id}`}
                                     title={`Découvrez ${profile.name} sur Culture+`}
@@ -342,11 +355,9 @@ export default function ProfileDetailPage() {
                             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 px-1">Coordonnées & Infos</h3>
 
                             <div className="space-y-5">
-                                <Link href={`/messages?with=${profile.id}`} className="block">
-                                    <Button className="w-full py-6 rounded-2xl text-lg font-black shadow-lg shadow-[var(--marketing-orange)]/20 gap-3 group">
-                                        <MessageSquare className="group-hover:scale-110 transition-transform" /> Contacter
-                                    </Button>
-                                </Link>
+                                <Button onClick={handleContact} disabled={isSubmitting} className="w-full py-6 rounded-2xl text-lg font-black shadow-lg shadow-[var(--marketing-orange)]/20 gap-3 group">
+                                    {isSubmitting ? <Loader2 className="animate-spin" /> : <><MessageSquare className="group-hover:scale-110 transition-transform" /> Contacter</>}
+                                </Button>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     {!isOwnProfile && (
