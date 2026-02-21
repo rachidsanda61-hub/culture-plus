@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { login as loginAction, register as registerAction, changePassword as changePasswordAction } from '@/app/actions/auth';
+import { pingPresence, setOffline } from '@/app/actions/presence';
 import { toast } from 'react-hot-toast';
 import { ProfileType } from '@prisma/client';
 
@@ -68,6 +69,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
+    // Presence management
+    useEffect(() => {
+        if (!user || !user.id || typeof window === 'undefined') return;
+
+        // Perform initial ping
+        pingPresence(user.id);
+
+        const pingInterval = setInterval(() => {
+            pingPresence(user.id);
+        }, 30000); // 30 seconds
+
+        const handleUnload = () => {
+            // we use beacon here or try to do it gracefully, but as fallback we have the timeout checking later anyway.
+            // Using navigator.sendBeacon is more reliable for final requests
+            navigator.sendBeacon(`/api/presence/offline?userId=${user.id}`);
+        };
+
+        window.addEventListener('beforeunload', handleUnload);
+
+        return () => {
+            clearInterval(pingInterval);
+            window.removeEventListener('beforeunload', handleUnload);
+        };
+    }, [user?.id]);
+
     const login = async (email: string, password?: string) => {
         try {
             const foundUser = await loginAction(email, password);
@@ -122,7 +148,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        if (user && user.id) {
+            await setOffline(user.id);
+        }
         setUser(null);
         localStorage.removeItem('culture_plus_user');
         router.push('/');

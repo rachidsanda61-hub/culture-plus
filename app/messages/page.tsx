@@ -8,6 +8,16 @@ import Link from 'next/link';
 import { Button } from '@/components/Button';
 import { Send, User, Loader2, ArrowLeft, Mail, Check, CheckCheck } from 'lucide-react';
 
+function formatTimeAgo(dateString: string | Date) {
+    const diff = Math.max(0, Date.now() - new Date(dateString).getTime());
+    const min = Math.floor(diff / 60000);
+    if (min === 0) return "à l'instant";
+    if (min < 60) return `${min} min`;
+    const hs = Math.floor(min / 60);
+    if (hs < 24) return `${hs} h`;
+    return `${Math.floor(hs / 24)} j`;
+}
+
 function MessagesContent() {
     const {
         conversations,
@@ -88,9 +98,9 @@ function MessagesContent() {
     }
 
     return (
-        <main className="min-h-screen bg-[var(--sand-50)] pt-20 pb-8 h-screen overflow-hidden">
-            <div className="max-w-6xl mx-auto px-4 h-full">
-                <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden h-[calc(100vh-10rem)] flex flex-col md:flex-row">
+        <main className="min-h-screen bg-[var(--sand-50)] pt-[5rem] md:pt-[6rem] pb-4 h-[100dvh] md:h-screen overflow-hidden flex flex-col">
+            <div className="max-w-6xl mx-auto px-2 md:px-4 h-full w-full flex-1 flex">
+                <div className="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 overflow-hidden w-full flex flex-col md:flex-row h-full">
 
                     {/* Left Side: Conversation List */}
                     <div className={`${activeConversationId && 'hidden md:flex'} w-full md:w-1/3 lg:w-[350px] border-r border-gray-100 flex flex-col bg-white shrink-0`}>
@@ -177,9 +187,9 @@ function MessagesContent() {
                                         <Link href={`/network/${activeConversation.partnerId}`} className="hover:text-[var(--marketing-orange)] transition-colors">
                                             <h3 className="font-bold text-gray-900 text-lg leading-tight">{activeConversation.partnerName}</h3>
                                         </Link>
-                                        <p className="text-xs text-[var(--marketing-green)] font-semibold flex items-center gap-1">
-                                            <span className="w-2 h-2 rounded-full bg-[var(--marketing-green)] animate-pulse"></span>
-                                            En ligne
+                                        <p className={`text-xs font-semibold flex items-center gap-1 ${activeConversation.isPartnerOnline ? 'text-[var(--marketing-green)]' : 'text-gray-500'}`}>
+                                            <span className={`w-2 h-2 rounded-full ${activeConversation.isPartnerOnline ? 'bg-[var(--marketing-green)] animate-pulse shadow-[0_0_8px_var(--marketing-green)]' : 'bg-red-500'}`}></span>
+                                            {activeConversation.isPartnerOnline ? 'En ligne' : (activeConversation.partnerLastSeen ? `Vu(e) il y a ${formatTimeAgo(activeConversation.partnerLastSeen)}` : 'Hors ligne')}
                                         </p>
                                     </div>
                                 </div>
@@ -219,9 +229,9 @@ function MessagesContent() {
                                     {isPartnerTyping() && (
                                         <div className="flex justify-start animate-bounce">
                                             <div className="bg-white text-gray-500 px-4 py-3 rounded-2xl rounded-bl-sm shadow-sm border border-gray-100 flex gap-1 items-center h-[42px] w-[64px]">
-                                                <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce cursor-default" style={{ animationDelay: "0ms" }}></span>
-                                                <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce cursor-default" style={{ animationDelay: "150ms" }}></span>
-                                                <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce cursor-default" style={{ animationDelay: "300ms" }}></span>
+                                                <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce cursor-default [animation-delay:0ms]"></span>
+                                                <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce cursor-default [animation-delay:150ms]"></span>
+                                                <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce cursor-default [animation-delay:300ms]"></span>
                                             </div>
                                         </div>
                                     )}

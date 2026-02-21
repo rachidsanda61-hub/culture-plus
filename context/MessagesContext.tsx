@@ -19,6 +19,8 @@ export interface ConversationListType {
     partnerName: string;
     partnerImage: string | null;
     partnerLastTypedAt: Date | null;
+    isPartnerOnline: boolean;
+    partnerLastSeen: Date | null;
     lastMessage: Message | null;
     unreadCount: number;
 }

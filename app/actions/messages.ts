@@ -11,7 +11,7 @@ export async function getConversations(userId: string) {
                     include: {
                         participants: {
                             where: { userId: { not: userId } },
-                            include: { user: { select: { id: true, name: true, image: true } } }
+                            include: { user: { select: { id: true, name: true, image: true, isOnline: true, lastSeen: true } } }
                         },
                         messages: {
                             orderBy: { createdAt: 'desc' },
@@ -35,12 +35,18 @@ export async function getConversations(userId: string) {
                 }
             }) : 0;
 
+            // Real-time presence heuristic: if lastSeen was updated < 90 seconds ago, consider online
+            const isReallyOnline = partnerInfo?.isOnline && partnerInfo?.lastSeen &&
+                (new Date().getTime() - new Date(partnerInfo.lastSeen).getTime()) < 90000;
+
             return {
                 id: p.conversation.id,
                 partnerId: partnerInfo?.id || '',
                 partnerName: partnerInfo?.name || 'Utilisateur',
                 partnerImage: partnerInfo?.image || null,
                 partnerLastTypedAt: partnerParam?.lastTypedAt || null,
+                isPartnerOnline: !!isReallyOnline,
+                partnerLastSeen: partnerInfo?.lastSeen || null,
                 updatedAt: p.conversation.updatedAt,
                 lastMessage: lastMessage ? {
                     content: lastMessage.content,
