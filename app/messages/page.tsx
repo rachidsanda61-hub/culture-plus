@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useRef } from 'react';
 import { useMessages } from '@/context/MessagesContext';
 import { useAuth } from '@/context/AuthContext';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/Button';
 import { Send, User, Loader2, ArrowLeft, Mail, Check, CheckCheck } from 'lucide-react';
@@ -30,20 +30,21 @@ function MessagesContent() {
     } = useMessages();
     const { user } = useAuth();
     const searchParams = useSearchParams();
+    const router = useRouter();
 
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Initial load from URL params
+    // Sync active state from URL params
     useEffect(() => {
         const convId = searchParams.get('conv');
-        if (convId && !activeConversationId) {
+        if (convId && convId !== activeConversationId) {
             setActiveConversationId(convId);
-        } else if (conversations.length > 0 && !activeConversationId && !convId) {
-            setActiveConversationId(conversations[0].id);
+        } else if (!convId && activeConversationId) {
+            setActiveConversationId(null);
         }
-    }, [searchParams, conversations, activeConversationId, setActiveConversationId]);
+    }, [searchParams, activeConversationId, setActiveConversationId]);
 
     // Auto-scroll to latest message
     useEffect(() => {
@@ -98,12 +99,12 @@ function MessagesContent() {
     }
 
     return (
-        <main className="min-h-screen bg-[var(--sand-50)] pt-[5rem] md:pt-[6rem] pb-4 h-[100dvh] md:h-screen overflow-hidden flex flex-col">
-            <div className="max-w-6xl mx-auto px-2 md:px-4 h-full w-full flex-1 flex">
-                <div className="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 overflow-hidden w-full flex flex-col md:flex-row h-full">
+        <main className="fixed inset-0 bg-[var(--sand-50)] pt-[64px] md:pt-[5rem] pb-0 md:pb-4 overflow-hidden flex flex-col z-40 lg:z-0">
+            <div className="max-w-6xl mx-auto px-0 md:px-4 h-full w-full flex-1 flex">
+                <div className="bg-white md:rounded-3xl shadow-none md:shadow-lg border-0 md:border border-gray-100 overflow-hidden w-full flex flex-col md:flex-row h-full">
 
                     {/* Left Side: Conversation List */}
-                    <div className={`${activeConversationId && 'hidden md:flex'} w-full md:w-1/3 lg:w-[350px] border-r border-gray-100 flex flex-col bg-white shrink-0`}>
+                    <div className={`${activeConversationId ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 lg:w-[350px] border-r border-gray-100 flex-col bg-white shrink-0`}>
                         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
                             <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">Discussions</h2>
                             <div className="w-8 h-8 rounded-full bg-[var(--marketing-orange)]/10 text-[var(--marketing-orange)] flex items-center justify-center font-bold text-sm">
@@ -121,7 +122,7 @@ function MessagesContent() {
                                         key={conv.id}
                                         onClick={() => {
                                             setActiveConversationId(conv.id);
-                                            window.history.pushState(null, '', `/messages?conv=${conv.id}`);
+                                            router.push(`/messages?conv=${conv.id}`);
                                         }}
                                         className={`w-full p-3 rounded-2xl flex items-center gap-4 transition-all text-left ${activeConversationId === conv.id ? 'bg-[var(--marketing-orange)]/5 border-transparent' : 'bg-transparent hover:bg-gray-50'}`}
                                     >
@@ -165,15 +166,15 @@ function MessagesContent() {
                     </div>
 
                     {/* Right Side: Chat Area */}
-                    <div className={`${!activeConversationId && 'hidden md:flex'} flex-1 flex flex-col bg-gray-50/50 relative overflow-hidden`}>
+                    <div className={`${!activeConversationId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-gray-50/50 relative overflow-hidden`}>
                         {activeConversationId && activeConversation ? (
                             <>
                                 {/* Chat Header */}
                                 <div className="p-4 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center gap-3 z-10 sticky top-0">
                                     <button onClick={() => {
                                         setActiveConversationId(null);
-                                        window.history.pushState(null, '', `/messages`);
-                                    }} className="md:hidden text-gray-400 hover:text-gray-600 p-2 -ml-2 rounded-full transition-colors" title="Retour">
+                                        router.push(`/messages`);
+                                    }} className="md:hidden text-gray-400 hover:text-[var(--marketing-orange)] p-2 -ml-2 rounded-full transition-colors active:scale-95" title="Retour">
                                         <ArrowLeft size={24} />
                                     </button>
                                     <Link href={`/network/${activeConversation.partnerId}`} className="w-11 h-11 rounded-full bg-gray-100 overflow-hidden shrink-0 border-2 border-white shadow-sm transform hover:scale-105 transition-transform">
